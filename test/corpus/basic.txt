@@ -1,0 +1,32 @@
+==================
+Identifier
+==================
+my_identifier
+---
+(source_file
+    (identifier)
+)
+==================
+Number
+==================
+01234
+---
+(source_file
+    (number)
+)
+==================
+Negative number
+==================
+-34.24
+---
+(source_file
+    (number)
+)
+==================
+Plain text
+==================
+something@else.com
+---
+(source_file
+    (plain_text)
+)

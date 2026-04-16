@@ -9,9 +9,16 @@
 
 export default grammar({
   name: "nlpp",
+  extras: $ => [/\s+/],
 
   rules: {
-    // TODO: add the actual grammar rules
-    source_file: $ => "hello"
+    source_file: $ => repeat(
+      choice($.identifier, $.number, $.plain_text)
+    ),
+
+    // Basic elements
+    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    number: $ => /-?\d+(\.\d+)?/,
+    plain_text: $ => prec(-1, /[^\s]+/),
   }
 });
