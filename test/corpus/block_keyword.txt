@@ -1,0 +1,79 @@
+==================
+Block keyword without body
+==================
+class MyClass
+---
+(source_file
+    (block_keyword_statement
+        keyword: (block_keyword)
+        name: (identifier)
+    )
+)
+==================
+Block keyword with body
+==================
+class MyClass { foo }
+---
+(source_file
+    (block_keyword_statement
+        keyword: (block_keyword)
+        name: (identifier)
+        body: (block
+            (identifier)
+        )
+    )
+)
+==================
+Nested block keywords
+==================
+layer domain {
+    module orders {
+        class OrderService {
+            foo
+        }
+    }
+}
+---
+(source_file
+    (block_keyword_statement
+        keyword: (block_keyword)
+        name: (identifier)
+        body: (block
+            (block_keyword_statement
+                keyword: (block_keyword)
+                name: (identifier)
+                body: (block
+                    (block_keyword_statement
+                        keyword: (block_keyword)
+                        name: (identifier)
+                        body: (block
+                            (identifier)
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+==================
+Multiple block keywords at top level
+==================
+layer domain { foo }
+layer infra { bar }
+---
+(source_file
+    (block_keyword_statement
+        keyword: (block_keyword)
+        name: (identifier)
+        body: (block
+            (identifier)
+        )
+    )
+    (block_keyword_statement
+        keyword: (block_keyword)
+        name: (identifier)
+        body: (block
+            (identifier)
+        )
+    )
+)
