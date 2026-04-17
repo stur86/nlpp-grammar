@@ -13,12 +13,18 @@ export default grammar({
 
   rules: {
     source_file: $ => repeat(
-      choice($.identifier, $.number, $.plain_text)
+      choice($.identifier, $.number, $.plain_text, $.string, $.inline_keyword)
+    ),
+
+    // Keywords
+    inline_keyword: $ => choice(
+      "define", "import", "field", "uses", "implements", "inherits"
     ),
 
     // Basic elements
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    number: $ => /-?\d+(\.\d+)?/,
+    identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
+    number: $ => token(/-?\d+(\.\d+)?/),
+    string: $ => token(/"(?:\\.|[^"\\])*"/),
     plain_text: $ => prec(-1, /[^\s]+/),
   }
 });

@@ -30,3 +30,19 @@ something@else.com
 (source_file
     (plain_text)
 )
+==================
+String
+==================
+"A string with anything inside"
+---
+(source_file
+    (string)
+)
+==================
+Inline keywords
+==================
+define
+---
+(source_file
+    (inline_keyword)
+)

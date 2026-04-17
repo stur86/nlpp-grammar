@@ -1,5 +1,10 @@
 [
   {
+    "type": "inline_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "plain_text",
     "named": true,
     "fields": {}
@@ -18,22 +23,58 @@
           "named": true
         },
         {
+          "type": "inline_keyword",
+          "named": true
+        },
+        {
           "type": "number",
           "named": true
         },
         {
           "type": "plain_text",
           "named": true
+        },
+        {
+          "type": "string",
+          "named": true
         }
       ]
     }
+  },
+  {
+    "type": "define",
+    "named": false
+  },
+  {
+    "type": "field",
+    "named": false
   },
   {
     "type": "identifier",
     "named": true
   },
   {
+    "type": "implements",
+    "named": false
+  },
+  {
+    "type": "import",
+    "named": false
+  },
+  {
+    "type": "inherits",
+    "named": false
+  },
+  {
     "type": "number",
     "named": true
+  },
+  {
+    "type": "string",
+    "named": true
+  },
+  {
+    "type": "uses",
+    "named": false
   }
 ]

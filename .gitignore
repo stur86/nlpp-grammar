@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Generated bindings
 bindings/*
+
+# Generated binaries
+parser.so
