@@ -140,3 +140,9 @@ vite.config.ts.timestamp-*
 
 # Generated bindings
 bindings/*
+
+# Tree-sitter generated files
+src/parser.c
+src/grammar.json
+src/node-types.json
+src/tree_sitter/
