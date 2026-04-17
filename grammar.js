@@ -13,7 +13,16 @@ export default grammar({
 
   rules: {
     source_file: $ => repeat(
-      choice($.identifier, $.number, $.string, $.plain_text)
+      choice($.block, $.identifier, $.number, $.string, $.plain_text)
+    ),
+
+    // Nestable block enclosed in curly braces
+    block: $ => seq(
+      '{',
+      repeat(
+        choice($.block, $.identifier, $.number, $.string, $.plain_text)
+      ),
+      '}'
     ),
 
     // Basic elements
