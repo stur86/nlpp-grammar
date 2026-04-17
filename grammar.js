@@ -13,12 +13,13 @@ export default grammar({
 
   rules: {
     source_file: $ => repeat(
-      choice($.identifier, $.number, $.plain_text)
+      choice($.identifier, $.number, $.string, $.plain_text)
     ),
 
     // Basic elements
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
     number: $ => /-?\d+(\.\d+)?/,
+    string: $ => /"(?:\\.|[^"\\])*"/,
     plain_text: $ => prec(-1, /[^\s]+/),
   }
 });
