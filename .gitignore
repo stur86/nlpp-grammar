@@ -138,9 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Generated bindings
-bindings/*
-
 # Generated binaries
 *.so
 *.a
