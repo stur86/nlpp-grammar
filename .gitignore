@@ -142,7 +142,10 @@ vite.config.ts.timestamp-*
 bindings/*
 
 # Generated binaries
-parser.so
+*.so
+*.a
+*.pc
+*.o
 
 # Tree-sitter generated files
 src/parser.c
