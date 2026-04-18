@@ -1,0 +1,464 @@
+================================================================================
+Function block — standalone hint, no body
+================================================================================
+
+method auto place_order
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)))
+
+================================================================================
+Function block — no return type, no body
+================================================================================
+
+method place_order
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    name: (identifier)))
+
+================================================================================
+Function block — with empty body
+================================================================================
+
+method place_order {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    name: (identifier)
+    body: (body)))
+
+================================================================================
+Function block — with return type and params
+================================================================================
+
+method auto place_order(Order order) {
+    uses validate_order
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)
+    params: (param_clause
+      (param_list
+        (param
+          type: (type
+            (identifier))
+          name: (identifier))))
+    body: (body
+      (uses_statement
+        target: (qualified_identifier
+          (identifier))))))
+
+================================================================================
+Function block — typed and untyped params
+================================================================================
+
+function compute(int x, y)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    name: (identifier)
+    params: (param_clause
+      (param_list
+        (param
+          type: (type
+            (identifier))
+          name: (identifier))
+        (param
+          name: (identifier))))))
+
+================================================================================
+Function block — empty param list
+================================================================================
+
+getter auto id()
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)
+    params: (param_clause)))
+
+================================================================================
+Function block — setter keyword
+================================================================================
+
+setter auto value
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)))
+
+================================================================================
+Function block — public modifier
+================================================================================
+
+public method auto place_order(Order order)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    (modifiers
+      (access_modifier))
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)
+    params: (param_clause
+      (param_list
+        (param
+          type: (type
+            (identifier))
+          name: (identifier))))))
+
+================================================================================
+Function block — public override modifier
+================================================================================
+
+public override method auto place_order(Order order) {
+    ???
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    (modifiers
+      (access_modifier))
+    keyword: (function_keyword)
+    return_type: (type)
+    name: (identifier)
+    params: (param_clause
+      (param_list
+        (param
+          type: (type
+            (identifier))
+          name: (identifier))))
+    body: (body
+      (fill_in))))
+
+================================================================================
+Object block — standalone hint
+================================================================================
+
+class OrderService
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)))
+
+================================================================================
+Object block — with empty body
+================================================================================
+
+layer domain {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    body: (body)))
+
+================================================================================
+Object block — inherits
+================================================================================
+
+class ExpressOrderService inherits OrderService
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    header: (object_header
+      (header_relation
+        target: (identifier)))))
+
+================================================================================
+Object block — implements
+================================================================================
+
+class OrderService implements IOrderService
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    header: (object_header
+      (header_relation
+        target: (identifier)))))
+
+================================================================================
+Object block — inherits and implements
+================================================================================
+
+class Dog inherits Animal implements ITrainable {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    header: (object_header
+      (header_relation
+        target: (identifier))
+      (header_relation
+        target: (identifier)))
+    body: (body)))
+
+================================================================================
+Object block — all keywords
+================================================================================
+
+layer l {
+}
+module m {
+}
+service s {
+}
+component c {
+}
+class cl {
+}
+interface i {
+}
+enum e {
+}
+type t {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body))
+  (object_block keyword: (object_keyword) name: (identifier) body: (body)))
+
+================================================================================
+Object block — public modifier
+================================================================================
+
+public class OrderService implements IOrderService {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    (modifiers
+      (access_modifier))
+    keyword: (object_keyword)
+    name: (identifier)
+    header: (object_header
+      (header_relation
+        target: (identifier)))
+    body: (body)))
+
+================================================================================
+Custom block — no header, no body
+================================================================================
+
+aggregate Order
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    keyword: (identifier)
+    name: (identifier)))
+
+================================================================================
+Custom block — with body
+================================================================================
+
+aggregate Order {
+    field auto id
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    keyword: (identifier)
+    name: (identifier)
+    body: (body
+      (field_statement
+        type: (type)
+        name: (identifier)))))
+
+================================================================================
+Custom block — with header clause
+================================================================================
+
+aggregate Order publishes OrderPlaced
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    keyword: (identifier)
+    name: (identifier)
+    (header_clause
+      word: (identifier)
+      (identifier_list
+        (identifier)))))
+
+================================================================================
+Custom block — multiple header clauses
+================================================================================
+
+aggregate Order publishes OrderPlaced consumes PaymentResult
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    keyword: (identifier)
+    name: (identifier)
+    (header_clause
+      word: (identifier)
+      (identifier_list
+        (identifier)))
+    (header_clause
+      word: (identifier)
+      (identifier_list
+        (identifier)))))
+
+================================================================================
+Custom block — header clause with comma-separated list
+================================================================================
+
+aggregate Order publishes OrderPlaced, OrderCancelled
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    keyword: (identifier)
+    name: (identifier)
+    (header_clause
+      word: (identifier)
+      (identifier_list
+        (identifier)
+        (identifier)))))
+
+================================================================================
+Custom block — with modifier
+================================================================================
+
+public aggregate Order {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (custom_block
+    (modifiers
+      (access_modifier))
+    keyword: (identifier)
+    name: (identifier)
+    body: (body)))
+
+================================================================================
+Nested object blocks
+================================================================================
+
+layer domain {
+    module orders {
+        class OrderService {
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    body: (body
+      (object_block
+        keyword: (object_keyword)
+        name: (identifier)
+        body: (body
+          (object_block
+            keyword: (object_keyword)
+            name: (identifier)
+            body: (body)))))))
+
+================================================================================
+Mixed content in a block body
+================================================================================
+
+class OrderService implements IOrderService {
+    uses PaymentGateway
+    uses OrderRepository
+    private field auto in_flight_tracker
+    ???
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (object_block
+    keyword: (object_keyword)
+    name: (identifier)
+    header: (object_header
+      (header_relation
+        target: (identifier)))
+    body: (body
+      (uses_statement
+        target: (qualified_identifier
+          (identifier)))
+      (uses_statement
+        target: (qualified_identifier
+          (identifier)))
+      (field_statement
+        (modifiers
+          (access_modifier))
+        type: (type)
+        name: (identifier))
+      (fill_in))))

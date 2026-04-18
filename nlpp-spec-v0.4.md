@@ -65,14 +65,13 @@ A prose block is freeform text that **is** passed to the LLM verbatim. It is the
 /?
   This service owns the full order lifecycle from placement to fulfilment.
   Do not expose internal state directly — all access must go through methods.
-  ??? handle cancellation edge cases
+  Leave room for cancellation edge cases.
 ?/
 ```
 
 - Opener `/?` and closer `?/` must each appear on their own line.
-- Content between the delimiters is opaque text (including newlines), passed through as-is.
-- `???` fill-in markers are recognised inside a prose block and produce `fill_in` AST nodes. Everything else between the delimiters is raw text.
-- `?/` is a reserved token — it may not appear anywhere inside prose content. This means the parser requires no lookahead or context to close the block: the first `?/` encountered always closes it.
+- Content between the delimiters is **fully opaque text** — a single raw token including newlines, passed through verbatim to the LLM. No structure is parsed inside a prose block.
+- `?/` is a reserved token — it may not appear anywhere inside prose content. The first `?/` encountered always closes the block unconditionally.
 - Prose blocks may appear anywhere a statement is valid: top-level, or inside a block body.
 
 ---
@@ -89,7 +88,7 @@ A prose block is freeform text that **is** passed to the LLM verbatim. It is the
 
 Everything following `???` on the same line is its hint: free-form text terminated by the usual statement terminators (newline, `//`, `/*`, `/?`). Quotes around the hint are optional and carry no special meaning — they are a style choice.
 
-`???` is valid as a standalone statement and also inside prose blocks. In both positions it produces a `fill_in` AST node whose content is the hint text (if any), which tooling can list and navigate.
+`???` is valid as a standalone statement. Inside a prose block (`/? … ?/`) it is treated as opaque text — it produces no AST node and carries no special meaning there.
 
 ---
 
