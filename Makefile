@@ -73,10 +73,10 @@ $(LANGUAGE_NAME).pc: bindings/c/$(LANGUAGE_NAME).pc.in
 		-e 's|@CMAKE_INSTALL_PREFIX@|$(PREFIX)|' $< > $@
 
 $(SRC_DIR)/grammar.json: grammar.js
-	$(TS) generate --no-parser $^
+	$(TS) generate --no-parser --abi 14 $^
 
 $(PARSER): $(SRC_DIR)/grammar.json
-	$(TS) generate $^
+	$(TS) generate --abi 14 $^
 
 install: all
 	install -d '$(DESTDIR)$(DATADIR)'/tree-sitter/queries/nlpp '$(DESTDIR)$(INCLUDEDIR)'/tree_sitter '$(DESTDIR)$(PCLIBDIR)' '$(DESTDIR)$(LIBDIR)'
