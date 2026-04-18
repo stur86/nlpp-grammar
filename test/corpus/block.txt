@@ -72,3 +72,22 @@ Block with plain text
         (plain_text)
     )
 )
+==================
+Block with a header
+==================
+class Dog inherits Animal {
+    A dog
+}
+---
+(source_file
+      (block_keyword_statement
+        (block_keyword)
+        (identifier)
+        (block_header_tail
+          (header_keyword_pair
+            (header_keyword)
+            (identifier)))
+        (block
+          (identifier)
+          (identifier)))
+)

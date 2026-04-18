@@ -46,11 +46,3 @@ String
 (source_file
     (string)
 )
-==================
-Inline keywords
-==================
-define
----
-(source_file
-    (inline_keyword)
-)

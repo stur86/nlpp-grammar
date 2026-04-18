@@ -19,6 +19,7 @@ export default grammar({
     _statement: $ => choice(
       $.block,
       $.block_keyword_statement,
+      $.header_keyword_pair,
       $.define_statement,
       $.import_statement,
       $.identifier,
@@ -28,12 +29,25 @@ export default grammar({
     ),
 
     // BLOCK KEYWORDS
-    // Pattern: <keyword> <identifier> optional({ ..._statement... })
+    // Pattern: <keyword> <identifier> <optional header> optional({ ..._statement... })
     block_keyword_statement: $ => prec.right(seq(
       field('keyword', $.block_keyword),
       field('name', $.identifier),
+      optional(field('header', $.block_header_tail)),
       optional(field('body', $.block))
     )),
+
+    // Header tail: structured tokens after the name, before { or end of line
+    block_header_tail: $ => prec.left(seq(
+      repeat1($.header_keyword_pair),
+    )),
+
+    // Relationship keyword + target identifier (inherits Animal, implements IFoo)
+    header_keyword_pair: $ => seq(
+      field('keyword', $.header_keyword),
+      field('target', $.identifier),
+    ),
+    header_keyword: $ => choice('inherits', 'implements'),
     block_keyword: $ => choice(
       'layer',
       'module',
