@@ -28,6 +28,13 @@ export default grammar({
       $.plain_text,
     ),
 
+    // Field declaration
+    field_declaration: $ => prec.left(seq(
+      'field',
+      optional(field('type', $.type)),
+      field('name', $.identifier),
+    )),
+
     // BLOCK KEYWORDS
     // Pattern: <keyword> <identifier> <optional header> optional({ ..._statement... })
     block_keyword_statement: $ => prec.right(seq(
@@ -84,6 +91,12 @@ export default grammar({
       'import',
       field('path', $.string),
       token(/[^\n]*/),
+    ),
+
+    // Type annotation (used in field declarations)
+    type: $ => choice(
+      'auto',
+      $.identifier
     ),
 
     // BASIC TOKENS
