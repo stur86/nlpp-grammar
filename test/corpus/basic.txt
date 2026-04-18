@@ -23,6 +23,14 @@ Negative number
     (number)
 )
 ==================
+String
+==================
+"This is all a single string"
+---
+(source_file
+    (string)
+)
+==================
 Plain text
 ==================
 something@else.com
