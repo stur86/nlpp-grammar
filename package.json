@@ -7,12 +7,10 @@
     "type": "git",
     "url": "git+https://github.com/stur86/nlpp-grammar.git"
   },
-  "funding": "",
   "license": "MIT",
   "author": {
     "name": "Simone Sturniolo",
-    "email": "simonesturniolo@gmail.com",
-    "url": ""
+    "email": "simonesturniolo@gmail.com"
   },
   "main": "bindings/node",
   "types": "bindings/node",
