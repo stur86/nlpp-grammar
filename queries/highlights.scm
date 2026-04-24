@@ -49,6 +49,3 @@
 
 ; ── Uses targets ──────────────────────────────────────────────────────────────
 (uses_statement target: (qualified_identifier) @variable)
-
-; ── Numbers ───────────────────────────────────────────────────────────────────
-(number) @number

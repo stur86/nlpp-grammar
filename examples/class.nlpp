@@ -1,0 +1,5 @@
+class User {
+    field string name
+    field string surname
+    ??? Add the other personal information here
+}

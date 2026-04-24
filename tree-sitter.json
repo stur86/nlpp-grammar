@@ -10,7 +10,8 @@
         "nlpp"
       ],
       "injection-regex": "^nlpp$",
-      "class-name": "TreeSitterNlpp"
+      "class-name": "TreeSitterNlpp",
+      "highlights": "queries/highlights.scm"
     }
   ],
   "metadata": {
