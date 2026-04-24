@@ -1,5 +1,9 @@
+import "another_file.nlpp"
+define Address A type including details of a home address, UK style
+
 class User {
     field string name
     field string surname
+    field Address address
     ??? Add the other personal information here
 }
