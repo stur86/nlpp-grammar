@@ -14,6 +14,14 @@
   },
   "main": "bindings/node",
   "types": "bindings/node",
+  "exports": {
+    ".": {
+      "browser": "./bindings/node/browser-stub.js",
+      "default": "./bindings/node/index.js"
+    },
+    "./wasm": "./tree-sitter-nlpp.wasm",
+    "./queries/highlights": "./queries/highlights.scm"
+  },
   "keywords": [
     "incremental",
     "parsing",
