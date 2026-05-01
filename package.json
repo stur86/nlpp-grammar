@@ -34,6 +34,7 @@
     "binding.gyp",
     "prebuilds/**",
     "bindings/node/binding.cc",
+    "bindings/node/browser-stub.js",
     "bindings/node/index.js",
     "bindings/node/index.d.ts",
     "queries/*",
