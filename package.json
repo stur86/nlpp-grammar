@@ -1,5 +1,5 @@
 {
-  "name": "tree-sitter-nlpp",
+  "name": "nlpp-grammar",
   "version": "0.1.0",
   "description": "Parser for the Natural Language++ pseudo-code spec for AI agents",
   "type": "module",
