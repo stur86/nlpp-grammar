@@ -23,13 +23,13 @@
 (string) @string
 
 ; ── Prose blocks ──────────────────────────────────────────────────────────────
-"/?" @punctuation.special
-"?/" @punctuation.special
+"/?" @string.special
+"?/" @string.special
 (prose_text) @string.special
 
 ; ── Fill-in markers ───────────────────────────────────────────────────────────
-"???" @punctuation.special
-(hint_text) @comment.line
+"???" @string.special
+(hint_text) @string.special
 
 ; ── Named definitions ─────────────────────────────────────────────────────────
 (define_statement name: (identifier) @constant)
