@@ -1,6 +1,6 @@
 # NL++ Language Specification
-**Version:** 0.4 (Draft)
-**File Extension:** `.nlpp`
+**Version:** 1.0  
+**File Extension:** `.nlpp`  
 **Language ID:** `nlpp`
 
 ---
@@ -13,18 +13,6 @@ The language enforces just enough structure to be toolable — syntax highlighti
 
 ---
 
-## Tooling Architecture
-
-All tooling lives in a single MCP server. It provides:
-
-1. **Language Server** — LSP implementation for the VSCode extension. Handles syntax, diagnostics, autocomplete, and symbol resolution across `.nlpp` files.
-2. **Keyword Registry** — Hardcoded definitions for all built-in keywords. User-defined terms via `define` are merged at parse time.
-3. **`nlpp_preprocessor` tool** — Accepts an entry file, resolves imports recursively, strips comments, collects all keywords and `define`d terms used, appends their definitions as a glossary, and returns a single string to be injected in the prompt.
-
-The VSCode extension wraps the MCP's LSP surface. No separate language server binary.
-
----
-
 ## Syntax
 
 ### General Rules
@@ -34,13 +22,13 @@ The VSCode extension wraps the MCP's LSP surface. No separate language server bi
 - Blocks are delimited by `{ }`. The opening `{` **must be on the same line** as the statement that owns it.
 - Identifiers conform to the regex `[a-zA-Z_][a-zA-Z0-9_]*`. `snake_case` and `PascalCase` are conventional but not enforced.
 - Type annotations are optional everywhere and advisory when present.
-- **Freeform text for the LLM must be enclosed in a prose block** (`/? … ?/`). A bare non-keyword line outside a prose block is a parse error. Tree-sitter will still recover gracefully, but the grammar does not sanction it.
+- **Freeform text for the LLM must be enclosed in a prose block** (`/? … ?/`) **or be part of a fill-in marker** (`???`). A bare non-keyword line outside either of these is a parse error. Tree-sitter will still recover gracefully, but the grammar does not sanction it.
 
 ---
 
 ### Comments
 
-Comments are for the author only. They are stripped by the preprocessor and never reach the LLM. Two forms are supported:
+Comments are for the author only. They are stripped during processing and never reach the LLM. Two forms are supported:
 
 ```nlpp
 // This is a line comment. Stripped at the end of the line.
@@ -69,7 +57,6 @@ A prose block is freeform text that **is** passed to the LLM verbatim. It is the
 ?/
 ```
 
-- Opener `/?` and closer `?/` must each appear on their own line.
 - Content between the delimiters is **fully opaque text** — a single raw token including newlines, passed through verbatim to the LLM. No structure is parsed inside a prose block.
 - `?/` is a reserved token — it may not appear anywhere inside prose content. The first `?/` encountered always closes the block unconditionally.
 - Prose blocks may appear anywhere a statement is valid: top-level, or inside a block body.
@@ -84,11 +71,11 @@ A prose block is freeform text that **is** passed to the LLM verbatim. It is the
 ??? "or with quotes if you prefer"
 ```
 
-`???` is the **inline prose marker** — the short form of a prose block. It signals that the author is intentionally leaving this area open for the agent to expand, and optionally provides a hint.
+`???` is the **single-line prose form** — its relationship to a prose block (`/? … ?/`) mirrors that of `//` to `/* … */`. Everything following `???` on the same line is freeform text passed to the LLM verbatim. Quotes are optional and carry no special meaning — they are a style choice.
 
-Everything following `???` on the same line is its hint: free-form text terminated by the usual statement terminators (newline, `//`, `/*`, `/?`). Quotes around the hint are optional and carry no special meaning — they are a style choice.
+A bare `???` with no trailing text is an explicit delegation point: the author is intentionally leaving this area open for the agent to expand.
 
-`???` is valid as a standalone statement. Inside a prose block (`/? … ?/`) it is treated as opaque text — it produces no AST node and carries no special meaning there.
+`???` is valid as a standalone statement or inside a block body. Inside a prose block (`/? … ?/`) it is treated as opaque text — it produces no AST node and carries no special meaning there.
 
 ---
 
@@ -100,7 +87,7 @@ define saga "A long-running process coordinator. Implements compensating transac
 ```
 
 - `define` binds a name to a definition string. Quotes around the definition are recommended for readability but optional.
-- Defined names become usable as **custom block keywords** (see Custom Blocks). They are treated as first-class architectural vocabulary by the preprocessor.
+- Defined names become usable as **custom block keywords** (see [Custom Blocks](#custom-blocks)). They are treated as first-class architectural vocabulary by tools that process NL++ files.
 - Defined terms propagate naturally through import inlining. The conventional location for project-wide vocabulary is `definitions.nlpp`, imported at the top of the entry file.
 
 ---
@@ -113,22 +100,14 @@ import "./domain/orders.nlpp"
 ```
 
 - Inlines the full contents of the target file at the point of import. No selective imports.
-- `nlpp_preprocessor` resolves imports recursively and deduplicates on canonical path.
+- Import paths are double-quoted strings.
 - Circular imports are a diagnostic warning but do not prevent processing.
 
 ---
 
 ### Block Syntax
 
-A block opens a scope. Everything between the keyword and the `{` is the **header**. The structure of the header depends on the block type.
-
-```
-<keyword> <name> <header> {
-    <body>
-}
-```
-
-There are three kinds of block: **function blocks**, **object blocks**, and **custom blocks**. All share the same body syntax: a sequence of statements terminated by `}`.
+There are three kinds of block: **function blocks**, **object blocks**, and **custom blocks**. All share the same body syntax — a type-specific keyword followed by additional information (identifiers or other keywords) and a sequence of statements wrapped in `{ }`. Each block type has its own structure between the keyword and the `{`; the details are in each subsection below.
 
 A block keyword on a line without a `{` is a valid standalone hint — no scope is opened.
 
@@ -138,7 +117,7 @@ A block keyword on a line without a `{` is a valid standalone hint — no scope 
 
 Function-block keywords: `function`, `method`, `getter`, `setter`.
 
-The header may contain an optional parameter list and an optional return-type annotation.
+The header may contain an optional return-type annotation and an optional parameter list.
 
 ```nlpp
 function auto compute_factorial(int x) {
@@ -161,16 +140,16 @@ getter auto internal_state {
 Header syntax:
 
 ```
-<function_keyword> <name> [( <param_list> )] [-> <type>] [{ <body> }]
+<function_keyword> [<type>] <name> [( <param_list> )] [{ <body> }]
 
 param_list := param (, param)*
 param      := [type] name
 type       := auto | identifier
 ```
 
+- The return type, if present, appears immediately after the keyword and before the name.
 - Parameters use **type-before-name** order (`Order order`, `int x`). The type is optional.
 - `auto` means explicit type deferral — infer the appropriate type from context.
-- The return type, if present, follows `->`.
 - The agent adapts all type hints to the target language's idioms.
 
 ---
@@ -224,7 +203,8 @@ Custom block header syntax is deliberately loose: zero or more **header clauses*
 ```
 <custom_keyword> <name> [<header_clause>*] [{ <body> }]
 
-header_clause := non_reserved_identifier identifier_list
+header_clause  := non_reserved_identifier identifier_list
+identifier_list := identifier (, identifier)*
 ```
 
 This allows user-invented relational vocabulary in headers:
@@ -235,7 +215,7 @@ aggregate Order publishes OrderPlaced consumes PaymentResult {
 }
 ```
 
-**Semantic resolution:** The LSP and preprocessor check whether the custom keyword resolves to a `define`d term. If yes, the block is treated as a defined architectural construct and its definition is included in the glossary. If the keyword is unresolved, a warning is emitted (not a parse error).
+**Semantic resolution:** Tools that process NL++ check whether the custom keyword resolves to a `define`d term. If yes, the block is treated as a defined architectural construct and its definition is included in the glossary. If the keyword is unresolved, a warning is emitted — not a parse error.
 
 ---
 
@@ -278,7 +258,7 @@ These are always single-line statements. A `{` following an inline keyword is a 
 | `define` | Binds a name to a definition string. |
 | `import` | Inlines the contents of another `.nlpp` file. |
 | `field` | A data member. |
-| `uses` | A dependency or reference. Scope-sensitive — see below. |
+| `uses` | A dependency or reference. Scope-sensitive — see [`uses` Scope Semantics](#uses--scope-semantics). |
 
 #### Header Relations
 
@@ -345,7 +325,7 @@ method auto place_order(Order order) {
 }
 ```
 
-The grammar makes no distinction. The LSP resolves `uses` semantics by inspecting the nearest enclosing block keyword.
+The grammar makes no distinction. Scope-sensitive interpretation is the responsibility of the tool consuming the parse tree.
 
 ---
 
@@ -442,62 +422,24 @@ layer infra {
 }
 ```
 
-`aggregate` in the example is a custom block. Its keyword resolves to the `define`d term from `definitions.nlpp`. The preprocessor includes its definition in the glossary.
+`aggregate` in the example is a custom block. Its keyword resolves to the `define`d term from `definitions.nlpp`. A tool appends its definition to the glossary delivered to the LLM.
 
 ---
 
-## Preprocessor
+## Processing Model
 
-Before `nlpp_preprocessor` appends the glossary:
+When an NL++ file is prepared for delivery to an LLM:
 
-1. Resolves `import` statements recursively, inlining file contents at import site. Deduplicates on canonical path.
-2. Strips all `line_comment` and `block_comment` nodes (`//` and `/* … */`). Prose blocks (`/? … ?/`) are **retained** — their delimiters are removed and their text content is emitted verbatim.
-3. Walks the result, collecting all distinct built-in keywords, `define`d terms, and `???` markers that appear in the file.
+1. **Import resolution** — `import` statements are resolved recursively and the referenced file's content is inlined at the import site. Files are deduplicated on canonical path.
+2. **Comment stripping** — all `line_comment` and `block_comment` nodes are removed. They are author-only annotations and never reach the LLM.
+3. **Prose passthrough** — prose blocks (`/? … ?/`) and fill-in markers (`???`) are retained as is; the text content is emitted verbatim.
+4. **Glossary** — all distinct built-in keywords and `define`d terms in the file are collected and appended as a glossary of definitions. The appendix at the end of this document lists the built-in definitions.
 
-No other transformation. Content inside prose blocks is passed through verbatim. `???` markers in the glossary get their own entry.
-
----
-
-## `nlpp_preprocessor` Tool
-
-**Signature:**
-```
-nlpp_preprocessor(entry_file: string) -> string
-```
-
-**Output format:**
-```
-<preprocessed nlpp content>
-
----
-KEYWORD GLOSSARY
-The following terms appear in the pseudocode above. Treat them as architectural intent.
-
-layer: ...
-module: ...
-aggregate: A DDD aggregate root...
-uses: ...
-???: ...
-```
-
-Only keywords and defined terms present in the file are included.
+No other transformation is applied.
 
 ---
 
-## Language Server Features (VSCode)
-
-| Feature | Behaviour |
-|---|---|
-| Syntax highlighting | Object-block keywords, function-block keywords, inline keywords, modifiers, header relations, `define`, `import`, `???`, prose blocks (`/?…?/`), comments |
-| Autocomplete | Built-in keywords, `define`d terms in scope, symbols from imported files |
-| Diagnostics | Unresolved `import` paths; circular imports; `{` following an inline keyword; unresolved custom block keywords; bare text outside a prose block |
-| Go to definition | Resolves named entities and `define`d terms across files |
-| Hover | Shows keyword or `define`d term definition inline |
-| Folding | Prose blocks, block comments, block bodies |
-
----
-
-## Appendix: Built-in Keyword Definitions (Registry)
+## Appendix: Built-in Keyword Definitions
 
 | Keyword | Definition |
 |---|---|
