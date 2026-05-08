@@ -441,6 +441,8 @@ No other transformation is applied.
 
 ## Appendix: Built-in Keyword Definitions
 
+These definitions are indicative and not verbatim. Each implementation of preprocessing NL++ files may adopt its own favoured wording, but the core intent should be preserved. The agent relies on these definitions to interpret the architectural and implementation intent of the pseudocode.
+
 | Keyword | Definition |
 |---|---|
 | `layer` | An architectural tier. Does not correspond to a specific code construct. Use to indicate separation of concerns (e.g. domain, application, infrastructure, presentation). |
