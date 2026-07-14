@@ -592,11 +592,49 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "type_arguments",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "type_arg",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "type",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "type_arguments",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "type_arg",
           "named": true
         }
       ]
@@ -617,6 +655,10 @@
         ]
       }
     }
+  },
+  {
+    "type": "&",
+    "named": false
   },
   {
     "type": "(",
@@ -644,6 +686,14 @@
   },
   {
     "type": "???",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
     "named": false
   },
   {
@@ -717,6 +767,10 @@
   {
     "type": "module",
     "named": false
+  },
+  {
+    "type": "number",
+    "named": true
   },
   {
     "type": "override",

@@ -79,6 +79,35 @@ A bare `???` with no trailing text is an explicit delegation point: the author i
 
 ---
 
+### Type Annotations
+
+Type annotations are optional everywhere and advisory when present. They appear in three positions: a field's type, a function/method return type, and a parameter's type. All three share the same syntax.
+
+```
+type          := "&"? base type_arguments?
+base          := auto | identifier
+type_arguments := "[" type_arg ("," type_arg)* "]"
+type_arg      := type | number
+```
+
+- **`&` prefix — reference/address.** `&int` denotes a reference to `int`. The prefix is not repeatable (`&&` is not supported).
+- **`[ … ]` — templating.** One or more comma-separated arguments, e.g. `Array[int]`, `Map[string, int]`. Each argument is itself a type (so references and templates compose and nest) or an integer literal such as a fixed size.
+- **`auto`** means explicit type deferral — infer the appropriate type from context — and may itself be used as a template argument (`Array[auto]`).
+
+| Example | Reading |
+|---|---|
+| `&int` | reference to `int` |
+| `Array[int]` | templated type |
+| `Map[string, int]` | multiple arguments |
+| `Array[Map[string, int]]` | nested templates |
+| `&Array[int]` | reference to an `Array[int]` |
+| `Array[&int]` | array of references |
+| `Array[int, 32]` | integer argument (e.g. a fixed size) |
+
+Like all annotations, these are hints: the agent adapts them to the target language's idioms (a reference may become a pointer, a borrow, or plain pass-by-reference; a template may become a generic, a container, or nothing at all).
+
+---
+
 ### Definitions
 
 ```nlpp
@@ -144,13 +173,23 @@ Header syntax:
 
 param_list := param (, param)*
 param      := [type] name
-type       := auto | identifier
 ```
 
 - The return type, if present, appears immediately after the keyword and before the name.
 - Parameters use **type-before-name** order (`Order order`, `int x`). The type is optional.
-- `auto` means explicit type deferral — infer the appropriate type from context.
+- Type annotations follow the full grammar in [Type Annotations](#type-annotations) — including the `&` reference prefix and `[ … ]` templating (e.g. `&Array[Order]`, `Map[string, int]`).
 - The agent adapts all type hints to the target language's idioms.
+
+**Implementation logic goes in prose, not bare lines.** A method body holds *hints*, not executable statements. Sketch the logic in a prose block (`/? … ?/`) or delegate with `???`. Bare imperative lines (`total = 0`, `for item in …`, `return total`) are **not** valid statements and are reported as syntax errors — wrap them:
+
+```nlpp
+method auto process_order(Order order) {
+    /?
+      total = sum of item.price over order.items
+      return total
+    ?/
+}
+```
 
 ---
 

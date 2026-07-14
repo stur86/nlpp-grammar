@@ -220,12 +220,32 @@ export default grammar({
     ),
 
     // ── Type annotation ───────────────────────────────────────────────────
+    // Optional `&` reference prefix, a base (`auto` or identifier), and optional
+    // `[ … ]` template arguments. Fully recursive: references and templates
+    // compose and nest (e.g. `&Array[int]`, `Array[&int]`, `Map[string, int]`).
+    // Type annotations are advisory throughout.
 
-    type: $ => choice('auto', $.identifier),
+    type: $ => seq(
+      optional('&'),
+      choice('auto', $.identifier),
+      optional($.type_arguments),
+    ),
+
+    type_arguments: $ => seq(
+      '[',
+      $.type_arg,
+      repeat(seq(',', $.type_arg)),
+      ']',
+    ),
+
+    // A template argument is a (recursive) type or an integer literal, e.g. a
+    // fixed size: `Array[int, 32]`.
+    type_arg: $ => choice($.type, $.number),
 
     // ── Basic tokens ──────────────────────────────────────────────────────
 
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    number: $ => /[0-9]+/,
     string: $ => /"(?:\\.|[^"\\])*"/
   },
 });

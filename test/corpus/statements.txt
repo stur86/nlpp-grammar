@@ -246,3 +246,153 @@ field auto id
   (field_statement
     type: (type)
     name: (identifier)))
+
+================================================================================
+Field — reference type
+================================================================================
+
+field &int x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier))
+    name: (identifier)))
+
+================================================================================
+Field — templated type
+================================================================================
+
+field Array[int] x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)))))
+    name: (identifier)))
+
+================================================================================
+Field — templated type with multiple arguments
+================================================================================
+
+field Map[string, int] x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)))
+        (type_arg
+          (type
+            (identifier)))))
+    name: (identifier)))
+
+================================================================================
+Field — templated type with integer argument
+================================================================================
+
+field Array[int, 32] x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)))
+        (type_arg
+          (number))))
+    name: (identifier)))
+
+================================================================================
+Field — reference to a templated type
+================================================================================
+
+field &Array[int] x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)))))
+    name: (identifier)))
+
+================================================================================
+Field — nested templated type
+================================================================================
+
+field Array[Map[string, int]] x
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (field_statement
+    type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)
+            (type_arguments
+              (type_arg
+                (type
+                  (identifier)))
+              (type_arg
+                (type
+                  (identifier))))))))
+    name: (identifier)))
+
+================================================================================
+Return type and parameter type — reference and template
+================================================================================
+
+method &Array[Order] fetch(Map[string, int] q) {
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (function_block
+    keyword: (function_keyword)
+    return_type: (type
+      (identifier)
+      (type_arguments
+        (type_arg
+          (type
+            (identifier)))))
+    name: (identifier)
+    params: (param_clause
+      (param_list
+        (param
+          type: (type
+            (identifier)
+            (type_arguments
+              (type_arg
+                (type
+                  (identifier)))
+              (type_arg
+                (type
+                  (identifier)))))
+          name: (identifier))))
+    body: (body)))

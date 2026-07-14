@@ -40,9 +40,13 @@
               name: (identifier) @type.definition)
 
 ; ── Type annotations ──────────────────────────────────────────────────────────
-(field_statement type: (type (identifier) @type))
-(function_block return_type: (type (identifier) @type))
-(param type: (type (identifier) @type))
+; A `type` node appears in field/return/param positions and, recursively, inside
+; template arguments — so one query highlights base type identifiers at any depth.
+(type (identifier) @type)
+(type "&" @operator)
+(type_arguments ["[" "]"] @punctuation.bracket)
+(type_arguments "," @punctuation.delimiter)
+(number) @number
 
 ; ── Parameters ────────────────────────────────────────────────────────────────
 (param name: (identifier) @variable.parameter)
