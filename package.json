@@ -31,9 +31,6 @@
   "files": [
     "grammar.js",
     "tree-sitter.json",
-    "binding.gyp",
-    "prebuilds/**",
-    "bindings/node/binding.cc",
     "bindings/node/browser-stub.js",
     "bindings/node/index.js",
     "bindings/node/index.d.ts",
@@ -49,7 +46,6 @@
     "node-gyp-build": "^4.8.4"
   },
   "devDependencies": {
-    "prebuildify": "^6.0.1",
     "tree-sitter": "^0.25.0",
     "tree-sitter-cli": "^0.26.8"
   },
