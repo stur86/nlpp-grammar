@@ -62,12 +62,10 @@
     }
   },
   "scripts": {
-    "install": "node-gyp-build",
-    "build": "tree-sitter generate && tree-sitter build",
-    "prebuild": "prebuildify --napi --strip",
+    "build": "tree-sitter generate && tree-sitter build --wasm",
     "prepublishOnly": "tree-sitter generate && tree-sitter build --wasm",
     "prestart": "tree-sitter generate && tree-sitter build --wasm",
     "start": "tree-sitter playground",
-    "test": "node --test bindings/node/*_test.js"
+    "test": "tree-sitter test"
   }
 }
