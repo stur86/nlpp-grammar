@@ -39,6 +39,13 @@ jobs:
       - name: Corpus tests
         run: npm test
 
+      # Parse with the *committed* WASM — no emscripten, no rebuild. That is the
+      # artifact git-dependency consumers actually get, and until it stops being
+      # committed nothing else in CI ever exercises it. The `wasm` job below
+      # checks a freshly built one instead; the two are different claims.
+      - name: Committed WASM parses the examples
+        run: npm run test:examples
+
   wasm:
     name: WASM builds and parses
     runs-on: ubuntu-latest
