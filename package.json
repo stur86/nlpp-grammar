@@ -42,13 +42,16 @@
     "*.wasm"
   ],
   "devDependencies": {
-    "tree-sitter-cli": "^0.26.8"
+    "tree-sitter-cli": "^0.26.8",
+    "web-tree-sitter": "^0.26.0"
   },
   "scripts": {
     "build": "tree-sitter generate && tree-sitter build --wasm",
     "prepublishOnly": "tree-sitter generate && tree-sitter build --wasm",
     "prestart": "tree-sitter generate && tree-sitter build --wasm",
     "start": "tree-sitter playground",
-    "test": "tree-sitter test"
+    "test": "tree-sitter test",
+    "test:examples": "node scripts/parse-examples.mjs",
+    "test:package": "node scripts/check-package.mjs"
   }
 }

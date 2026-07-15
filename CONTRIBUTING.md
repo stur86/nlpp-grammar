@@ -39,8 +39,14 @@ Key npm scripts:
 |---|---|
 | `npm run build` | `tree-sitter generate && tree-sitter build --wasm` |
 | `npm test` | Run the corpus tests in `test/corpus/` |
+| `npm run test:examples` | Parse every `examples/*.nlpp` with the built WASM |
+| `npm run test:package` | Pack a tarball, install it into an empty project, check the entry points |
 | `npm start` | Launch the Tree-sitter playground (interactive parser UI) |
 | `npm run prepublishOnly` | Same as `build` — runs automatically before `npm publish` |
+
+CI runs exactly these scripts — `scripts/parse-examples.mjs` and
+`scripts/check-package.mjs` — rather than inlining the logic into workflow YAML,
+so anything CI can catch, you can reproduce locally with one command.
 
 Building the WASM locally needs emscripten (`emcc`) on `PATH`; the tree-sitter
 CLI falls back to Docker if it isn't found.

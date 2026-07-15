@@ -6,10 +6,13 @@
       "name": "tree-sitter-nlpp",
       "devDependencies": {
         "tree-sitter-cli": "^0.26.8",
+        "web-tree-sitter": "^0.26.0",
       },
     },
   },
   "packages": {
     "tree-sitter-cli": ["tree-sitter-cli@0.26.8", "", { "bin": { "tree-sitter": "cli.js" } }, "sha512-teQFMF5V/g8aIdakZ0M/eZoedCM3MuBt1JuDOICLloA2hy7QfeOInb99U6wiML4qXcBHWREwf0U1TWzw7p67YA=="],
+
+    "web-tree-sitter": ["web-tree-sitter@0.26.11", "", {}, "sha512-Q5Dm3YTIXSXuH6FxX6RuzX2Qwpc4DPGiYMU87Wg5Z8OIStiQFiUex4zMDc0vBTw78EphaYJacncJghCHzbZptg=="],
   }
 }

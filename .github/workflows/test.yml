@@ -62,51 +62,8 @@ jobs:
       - name: Build WASM
         run: npm run build
 
-      # The grammar being correct and the *shipped artifact* being correct are
-      # different claims. Parse every example with the freshly built WASM,
-      # through web-tree-sitter, exactly as consumers do. Between them the
-      # examples cover every feature in the spec, so this doubles as the guard
-      # that keeps them from drifting away from the grammar.
-      #
-      # Check `isMissing` as well as ERROR nodes: tree-sitter recovers from some
-      # invalid input by inserting a zero-width MISSING node, and a check that
-      # only looks for ERROR would pass on input the parser actually rejected.
       - name: Parse the examples with the built WASM
-        run: |
-          npm install --no-save web-tree-sitter
-          node -e '
-            const { Parser, Language } = require("web-tree-sitter");
-            const { readFileSync, readdirSync } = require("node:fs");
-            (async () => {
-              await Parser.init();
-              const lang = await Language.load("./tree-sitter-nlpp.wasm");
-              const p = new Parser();
-              p.setLanguage(lang);
-              const files = readdirSync("./examples").filter(f => f.endsWith(".nlpp")).sort();
-              if (!files.length) throw new Error("no examples found to parse");
-              let failed = 0;
-              for (const f of files) {
-                const src = readFileSync("./examples/" + f, "utf8");
-                const tree = p.parse(src);
-                const errs = [];
-                (function walk(n) {
-                  if (n.type === "ERROR" || n.isMissing) {
-                    const line = src.split("\n")[n.startPosition.row];
-                    errs.push("line " + (n.startPosition.row + 1) + ": " + line.trim());
-                  }
-                  n.children.forEach(walk);
-                })(tree.rootNode);
-                if (errs.length) {
-                  failed++;
-                  console.error("::error file=examples/" + f + "::failed to parse — " + errs[0]);
-                } else {
-                  console.log("ok  examples/" + f + " (" + tree.rootNode.namedChildCount + " top-level nodes)");
-                }
-              }
-              if (failed) process.exit(1);
-              console.log("all " + files.length + " examples parsed");
-            })().catch(e => { console.error("::error::" + e.message); process.exit(1); });
-          '
+        run: npm run test:examples
 
   package:
     name: Package installs cleanly
@@ -122,21 +79,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Pack and install into an empty project, so this sees only what `files`
-      # ships — not the repo's working tree. This is what caught the entry point
-      # being broken for every consumer while looking fine locally.
       - name: Pack and install as a consumer
-        run: |
-          TGZ=$(npm pack --silent --pack-destination /tmp | tail -1)
-          mkdir -p /tmp/consumer && cd /tmp/consumer
-          npm init -y >/dev/null
-          npm install "/tmp/$TGZ"
-          node -e '
-            const g = require("node:module").createRequire("/tmp/consumer/");
-            import("nlpp-grammar").then(m => {
-              if (!require("node:fs").existsSync(m.wasmPath)) throw new Error("wasmPath does not exist: " + m.wasmPath);
-              g.resolve("nlpp-grammar/wasm");
-              g.resolve("nlpp-grammar/queries/highlights");
-              console.log("entry point ok; wasm + queries subpaths resolve");
-            }).catch(e => { console.error("::error::" + e.message); process.exit(1); });
-          '
+        run: npm run test:package
