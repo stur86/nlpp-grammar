@@ -1,0 +1,98 @@
+// Custom blocks, prose, and fill-in markers.
+//
+// Any non-reserved identifier can be a block keyword. This is how `define`d
+// terms become first-class architectural constructs rather than comments.
+// Tools check whether the keyword resolves to a defined term: if it does, the
+// definition goes into the glossary; if it doesn't, that's a warning, not a
+// parse error.
+
+import "./definitions.nlpp"
+
+// `aggregate` is defined in definitions.nlpp, so this is a defined construct
+// and the agent will be told what an aggregate is.
+aggregate Loan {
+    private field auto id
+    field &Copy copy
+    field auto member
+    field auto due_at
+
+    /?
+      Invariants live here and nowhere else. A copy can be on at most one open
+      loan at a time; renewals extend due_at rather than creating a new loan.
+    ?/
+}
+
+// Custom block headers are deliberately loose: zero or more clauses of the form
+// <word> <name_list>, where <word> is any non-reserved identifier. This lets you
+// invent relational vocabulary the grammar has never heard of.
+aggregate Reservation publishes ReservationPlaced, ReservationCancelled consumes CopyReturned {
+    field auto member
+    field auto queued_at
+    ??? decide whether reservations expire, and after how long
+}
+
+// An unresolved keyword — `workflow` is never defined — parses fine and earns a
+// warning rather than an error. The grammar doesn't police your vocabulary.
+workflow OverdueChase {
+    /?
+      Escalate politely: reminder at due date, second at +7 days, invoice at
+      +30. Stop immediately if the copy comes back.
+    ?/
+}
+
+policy LatePenalty {
+    /?
+      Fines accrue daily but cap at the replacement cost of the copy. Waive
+      entirely for under-18 members — this is a legal requirement, not a
+      preference, so don't make it configurable.
+    ?/
+}
+
+adapter EmailNotifier {
+    uses OverdueChase
+    method auto notify(auto member, string template)
+    ???
+}
+
+class LendingDesk {
+    uses Loan
+    uses LatePenalty
+
+    public method &Loan checkout(Copy copy, auto member) {
+        uses Loan
+        uses LatePenalty
+        /?
+          Refuse if the member has anything overdue. Otherwise open a loan with
+          a due date 21 days out, and reserve the copy atomically — two desks
+          must never hand out the same copy.
+        ?/
+    }
+
+    // Implementation logic belongs in prose, not bare lines. `total = 0` or
+    // `for item in items` would be a parse error; wrapping them is what makes
+    // them legal — and the agent reads them as intent either way.
+    public method auto settle(auto member) {
+        /?
+          owed = sum of penalty over member.overdue_loans
+          apply LatePenalty cap to owed
+          return owed
+        ?/
+    }
+
+    // A bare ??? with no text: an explicit delegation point. The author is
+    // deliberately leaving this open.
+    ???
+
+    // With trailing text.
+    ??? add a grace period for public holidays
+
+    // Quotes are a style choice and carry no special meaning.
+    ??? "renewals — decide whether they're a new method or a flag on checkout"
+}
+
+/?
+  A prose block is the designated place for freeform text, and it is passed to
+  the LLM verbatim. Nothing inside is parsed: braces { }, keywords like class,
+  and even ??? are just opaque characters here. The only thing you cannot write
+  is the closing delimiter itself, because the first one always closes the block.
+?/

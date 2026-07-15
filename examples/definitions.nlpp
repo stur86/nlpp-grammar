@@ -1,0 +1,23 @@
+// Project vocabulary.
+//
+// `define` binds a name to a definition string. The defined name then becomes
+// usable as a custom block keyword, and tools append its definition to the
+// glossary they hand the LLM — so the agent knows what you mean by "aggregate"
+// without you re-explaining it in every file.
+//
+// The conventional home for project-wide vocabulary is a file like this one,
+// imported at the top of the entry file.
+
+// Quotes around the definition are recommended for readability, but optional.
+define aggregate "A DDD aggregate root. Owns its invariants and never exposes raw internal state."
+define policy "A business rule that can be swapped or overridden per deployment."
+define adapter "A boundary object translating between our domain and an external system."
+
+// Without quotes — equally valid, just harder to read once it gets long.
+define shelf A physical or virtual location where a copy can rest
+
+/*
+  Block comments work too, and like line comments they are stripped during
+  processing — they never reach the LLM. To say something *to* the agent, use a
+  prose block or a ??? marker instead.
+*/

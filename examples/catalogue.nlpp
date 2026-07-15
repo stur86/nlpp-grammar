@@ -1,0 +1,112 @@
+// Object blocks, function blocks, modifiers, and `uses`.
+//
+// Object-block keywords: layer, module, service, component, class, interface,
+// enum, type. Function-block keywords: function, method, getter, setter.
+// All block keywords are advisory — the agent maps them to whatever the target
+// language actually has. `class` in a functional language might well become a
+// record plus some functions.
+
+layer domain {
+
+    module catalogue {
+
+        // A fixed set of named values. Like every block body, an enum body holds
+        // statements — not bare comma-separated names.
+        enum CopyStatus {
+            field available
+            field on_loan
+            field lost
+            ??? add a "being repaired" state if the workflow needs one
+        }
+
+        // `type` is a data shape or alias.
+        type Isbn {
+            /?
+              A 13-digit ISBN. Validate the checksum on construction; reject
+              anything that doesn't parse rather than storing it dirty.
+            ?/
+        }
+
+        // An abstract contract. Implement it as whatever the target language
+        // considers idiomatic — interface, protocol, trait, abstract class.
+        interface Searchable {
+            method Array[Book] search(string query)
+            method auto suggest(string prefix)
+            ???
+        }
+
+        class Book implements Searchable {
+            private field auto id
+            field Isbn isbn
+            field string title
+            field Array[string] authors
+
+            // getter/setter take no parameter list.
+            getter auto display_name {
+                /?
+                  "Title (First Author, Year)" — fall back to just the title
+                  when the author list is empty.
+                ?/
+            }
+
+            // A block keyword on a line with no `{` is a valid standalone hint:
+            // no scope is opened, but the intent is recorded.
+            method auto touch
+        }
+
+        // `inherits` and `implements` may appear in any order, and may repeat.
+        class RareBook inherits Book implements Searchable {
+            field auto vault_location
+
+            // Modifier ordering matters: access modifier before `override`.
+            // `public override` is valid; `override public` is a parse error.
+            public override method Array[Book] search(string query) {
+                /?
+                  Same as the parent, but never return vault contents to
+                  anonymous callers.
+                ?/
+            }
+        }
+    }
+}
+
+layer infra {
+
+    // A service boundary. This one is external, so the agent should define the
+    // boundary rather than implement it.
+    service IsbnLookup {
+        /?
+          Third-party HTTP API — do not implement. Define a client wrapper and
+          treat every call as fallible.
+        ?/
+        method Book fetch(Isbn isbn)
+        method bool exists(Isbn isbn)
+    }
+
+    class CatalogueRepository {
+        // `uses` at type scope is a structural dependency: inject, instantiate,
+        // or import it.
+        uses IsbnLookup
+
+        public method auto save(Book book) {
+            // `uses` at method scope is an implementation hint: this callable is
+            // involved, and the agent works out how. A dotted qualified name
+            // points at a specific member.
+            uses IsbnLookup.exists
+            /?
+              Reject the save if the ISBN doesn't resolve upstream. Must be
+              idempotent — saving the same book twice is not an error.
+            ?/
+        }
+
+        ??? add find_by_author once the indexing story is settled
+    }
+}
+
+// A standalone callable, not a member of a type.
+function auto normalise_title(string raw) {
+    /?
+      Strip leading articles for sort purposes ("The Hobbit" sorts under H).
+      Keep the original for display.
+    ?/
+}

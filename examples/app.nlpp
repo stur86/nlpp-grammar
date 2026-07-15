@@ -1,0 +1,53 @@
+// An entry file.
+//
+// `import` inlines the full contents of the target file at the point of import
+// — there are no selective imports. Files are deduplicated on canonical path,
+// so importing definitions.nlpp here and again from lending.nlpp is harmless.
+// Circular imports are a warning, not a failure.
+//
+// Compile this file to see the whole system as one resolved prompt:
+//
+//   npx nlpp-compile examples/app.nlpp
+
+import "./definitions.nlpp"
+import "./types.nlpp"
+import "./catalogue.nlpp"
+import "./lending.nlpp"
+
+/?
+  A small library lending system. Build it in whatever language and framework
+  the surrounding project already uses; nothing here is prescriptive about
+  storage, transport, or frameworks.
+
+  The one hard rule: a copy is never on two open loans at once. Everything else
+  is negotiable.
+?/
+
+// Block keywords without a `{` are valid standalone hints — no scope opened,
+// intent recorded.
+layer presentation
+
+component MemberPortal {
+    uses LendingDesk
+    uses Searchable
+
+    /?
+      Search, reserve, renew, and pay fines. Mobile-first. Members should never
+      see the word "aggregate".
+    ?/
+
+    ??? decide whether this is server-rendered or a SPA
+}
+
+component StaffConsole {
+    uses LendingDesk
+    uses CatalogueRepository
+    ???
+}
+
+function auto main {
+    /?
+      Wire the layers together and start the portal. Keep composition in one
+      place so the dependency graph is readable at a glance.
+    ?/
+}

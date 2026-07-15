@@ -1,9 +1,17 @@
-import "another_file.nlpp"
+// The smallest useful NL++ file: sketch a shape, describe the rest.
+//
+// Start here, then see app.nlpp for how the pieces fit together.
+
+// `define` coins a term. The definition reaches the LLM via the glossary, so
+// you explain it once rather than in every file that uses it.
 define Address A type including details of a home address, UK style
 
 class User {
     field string name
     field string surname
     field Address address
+
+    // ??? delegates: the author is deliberately leaving this open for the agent
+    // to expand from context.
     ??? Add the other personal information here
 }

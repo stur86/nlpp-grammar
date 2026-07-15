@@ -1,0 +1,61 @@
+// Type annotations.
+//
+// Annotations are optional everywhere and advisory when present: the agent
+// adapts them to the target language's idioms. A reference may become a
+// pointer, a borrow, or plain pass-by-reference; a template may become a
+// generic, a container, or nothing at all.
+//
+// The grammar is:
+//
+//   type           := "&"? base type_arguments?
+//   base           := auto | identifier
+//   type_arguments := "[" type_arg ("," type_arg)* "]"
+//   type_arg       := type | number
+//
+// Annotations appear in exactly three positions: a field's type, a
+// function/method return type, and a parameter's type. All three share this
+// syntax.
+
+class TypeShowcase {
+    // No annotation at all — always fine.
+    field title
+
+    // `auto` is explicit type deferral: infer it from context.
+    field auto id
+
+    // A plain named type.
+    field string isbn
+
+    // & — a reference to something, rather than a copy of it.
+    field &Catalogue source
+
+    // [ ] — templating, with one argument.
+    field Array[Loan] history
+
+    // Several arguments.
+    field Map[string, Loan] by_member
+
+    // An integer argument, e.g. a fixed size.
+    field Array[Copy, 32] shelf_slots
+
+    // The two notations compose and nest freely.
+    field &Array[Copy] borrowed          // reference to an Array[Copy]
+    field Array[&Copy] watchers          // array of references
+    field Map[string, Array[Loan]] index // nested templates
+    field Array[auto] whatever_fits      // auto as a template argument
+
+    // Return types sit between the keyword and the name; parameters are
+    // type-before-name, and their types are optional too.
+    method &Loan checkout(Copy copy, auto member)
+    method Array[Loan] overdue(Map[string, int] grace_days)
+    method auto reshelve(&Copy copy, int slot)
+
+    // A parameter with no type annotation at all.
+    method auto note(reason)
+}
+
+/?
+  Note for the agent: none of the above is a contract. Where a template or
+  reference doesn't map cleanly onto the target language, prefer the idiomatic
+  construct over a literal translation.
+?/
