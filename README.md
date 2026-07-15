@@ -34,7 +34,8 @@ For the full language reference see [nlpp-spec-v1.0.md](nlpp-spec-v1.0.md).
 | `grammar.js` | Tree-sitter grammar definition |
 | `src/` | Generated C parser (output of `tree-sitter generate`) |
 | `queries/highlights.scm` | Syntax highlighting capture groups |
-| `bindings/` | Language bindings (Node, Python, Rust, Go, Swift, C) |
+| `bindings/node/` | Node entry point — locates the WASM and queries (no parsing, no dependencies) |
+| `tree-sitter-nlpp.wasm` | Compiled grammar; the artifact JS consumers actually load |
 | `test/` | Corpus tests (`tree-sitter test`) |
 | `nlpp-spec-v1.0.md` | Full NL++ language specification |
 | `CONTRIBUTING.md` | Build system details, local install, and release workflow |

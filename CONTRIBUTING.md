@@ -14,9 +14,20 @@ Two artifacts come out of `grammar.js`:
 **Generated C parser** — `tree-sitter generate` reads `grammar.js` and writes
 `src/parser.c`, `src/grammar.json`, and `src/node-types.json`. These are
 deterministic text, and they are committed. CI regenerates them and fails on any
-diff, so they can never drift from `grammar.js`. They are also the source that
-the non-Node bindings (Rust, Go, Python, Swift, C) each compile with their own
-toolchain — none of those go through npm.
+diff, so they can never drift from `grammar.js`.
+
+Keeping `src/parser.c` committed is what lets any tree-sitter consumer use this
+grammar straight from the repo, without npm. Editors work this way: a Zed
+extension, for instance, points at `repository` + `rev` (a commit SHA) in its
+`extension.toml` and builds the grammar from these sources — it never looks at
+npm, and needs no language-specific manifest here. (Zed extensions keep their own
+copy of the highlight queries, so `queries/highlights.scm` is the canonical
+source to sync *from*, not the file Zed reads.)
+
+The Rust, Go, Python, Swift, and C binding scaffolds were removed: they were
+`tree-sitter init` output that had never been built or tested, and they only
+matter for publishing to crates.io / PyPI / SwiftPM, which this project does not
+do. `tree-sitter init` regenerates them in seconds if that ever changes.
 
 **WASM** — `tree-sitter build --wasm` compiles `src/parser.c` into
 `tree-sitter-nlpp.wasm` via emscripten. This is the artifact every JavaScript
