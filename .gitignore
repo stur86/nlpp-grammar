@@ -146,14 +146,15 @@ vite.config.ts.timestamp-*
 *.o
 *.wasm
 
-# The WASM parser IS committed: it is portable across platforms and runtimes
-# and is the primary artifact every consumer (web-tree-sitter) loads. Committing
-# it makes git-dependency installs work with no build toolchain.
+# The WASM parser IS committed, but only until consumers install from npm rather
+# than git refs: git dependencies never run prepublishOnly, so without the
+# artifact in the tree a git-dep install would have no grammar at all. Delete it
+# once the consumers move to the registry version. See CONTRIBUTING.md.
 !tree-sitter-nlpp.wasm
 
 # Tree-sitter generated files ARE committed (portable C source + JSON), so a
 # git clone is immediately usable without running `tree-sitter generate`.
 # src/parser.c, src/grammar.json, src/node-types.json, src/tree_sitter/ are tracked.
 
-# Prebuilds are platform-specific .node binaries — built in CI, not committed.
-prebuilds/
+# Design notes — kept locally, not part of the published repo.
+docs/superpowers/
