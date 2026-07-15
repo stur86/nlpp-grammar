@@ -19,42 +19,30 @@ type NodeInfo =
     });
 
 /**
- * The tree-sitter language object for this grammar.
+ * Absolute filesystem path to the compiled grammar WASM.
  *
- * @see {@linkcode https://tree-sitter.github.io/node-tree-sitter/interfaces/Parser.Language.html Parser.Language}
+ * This package ships WebAssembly only — there is no native addon, so parsing is
+ * the consumer's job. Load the WASM with web-tree-sitter:
  *
  * @example
- * import Parser from "tree-sitter";
- * import NLpp from "tree-sitter-nlpp";
+ * import { Parser, Language } from "web-tree-sitter";
+ * import { wasmPath } from "nlpp-grammar";
  *
+ * await Parser.init();
  * const parser = new Parser();
- * parser.setLanguage(NLpp);
+ * parser.setLanguage(await Language.load(wasmPath));
  */
-declare const binding: {
-  /**
-   * The inner language object.
-   * @private
-   */
-  language: unknown;
+export declare const wasmPath: string;
 
-  /**
-   * The content of the `node-types.json` file for this grammar.
-   *
-   * @see {@linkplain https://tree-sitter.github.io/tree-sitter/using-parsers/6-static-node-types Static Node Types}
-   */
-  nodeTypeInfo: NodeInfo[];
+/** Absolute filesystem path to the syntax highlighting query. */
+export declare const highlightsQueryPath: string;
 
-  /** The syntax highlighting query for this grammar. */
-  HIGHLIGHTS_QUERY?: string;
+/** The syntax highlighting query for this grammar. */
+export declare const HIGHLIGHTS_QUERY: string;
 
-  /** The language injection query for this grammar. */
-  INJECTIONS_QUERY?: string;
-
-  /** The local variable query for this grammar. */
-  LOCALS_QUERY?: string;
-
-  /** The symbol tagging query for this grammar. */
-  TAGS_QUERY?: string;
-};
-
-export default binding;
+/**
+ * The content of the `node-types.json` file for this grammar.
+ *
+ * @see {@linkplain https://tree-sitter.github.io/tree-sitter/using-parsers/6-static-node-types Static Node Types}
+ */
+export declare const nodeTypeInfo: NodeInfo[];

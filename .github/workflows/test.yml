@@ -1,0 +1,120 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Corpus, drift, and package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `tree-sitter generate` is deterministic text — no emscripten in the loop —
+      # so the generated C parser must always match grammar.js. This catches the
+      # real hazard: editing grammar.js without regenerating.
+      - name: Generated parser is in sync with grammar.js
+        run: |
+          npx tree-sitter generate
+          if ! git diff --exit-code --stat -- src/; then
+            echo "::error::src/ is out of sync with grammar.js. Run 'npm run build' and commit the result."
+            exit 1
+          fi
+
+      - name: Corpus tests
+        run: npm test
+
+  wasm:
+    name: WASM builds and parses
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Pinned deliberately: the emscripten version determines the WASM bytes.
+      # This must stay in step with the pin in publish.yml.
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build WASM
+        run: npm run build
+
+      # The grammar being correct and the *shipped artifact* being correct are
+      # different claims. Parse a real file with the freshly built WASM, through
+      # web-tree-sitter, exactly as consumers do.
+      - name: Parse with the built WASM
+        run: |
+          npm install --no-save web-tree-sitter
+          node -e '
+            const { Parser, Language } = require("web-tree-sitter");
+            const { readFileSync } = require("node:fs");
+            (async () => {
+              await Parser.init();
+              const lang = await Language.load("./tree-sitter-nlpp.wasm");
+              const p = new Parser();
+              p.setLanguage(lang);
+              const src = readFileSync("./examples/class.nlpp", "utf8");
+              const tree = p.parse(src);
+              if (tree.rootNode.hasError) {
+                console.error("::error::the built WASM failed to parse examples/class.nlpp");
+                process.exit(1);
+              }
+              console.log("parsed examples/class.nlpp:", tree.rootNode.namedChildCount, "top-level nodes");
+            })().catch(e => { console.error("::error::" + e.message); process.exit(1); });
+          '
+
+  package:
+    name: Package installs cleanly
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Pack and install into an empty project, so this sees only what `files`
+      # ships — not the repo's working tree. This is what caught the entry point
+      # being broken for every consumer while looking fine locally.
+      - name: Pack and install as a consumer
+        run: |
+          TGZ=$(npm pack --silent --pack-destination /tmp | tail -1)
+          mkdir -p /tmp/consumer && cd /tmp/consumer
+          npm init -y >/dev/null
+          npm install "/tmp/$TGZ"
+          node -e '
+            const g = require("node:module").createRequire("/tmp/consumer/");
+            import("nlpp-grammar").then(m => {
+              if (!require("node:fs").existsSync(m.wasmPath)) throw new Error("wasmPath does not exist: " + m.wasmPath);
+              g.resolve("nlpp-grammar/wasm");
+              g.resolve("nlpp-grammar/queries/highlights");
+              console.log("entry point ok; wasm + queries subpaths resolve");
+            }).catch(e => { console.error("::error::" + e.message); process.exit(1); });
+          '

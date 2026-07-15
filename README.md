@@ -37,7 +37,7 @@ For the full language reference see [nlpp-spec-v1.0.md](nlpp-spec-v1.0.md).
 | `bindings/` | Language bindings (Node, Python, Rust, Go, Swift, C) |
 | `test/` | Corpus tests (`tree-sitter test`) |
 | `nlpp-spec-v1.0.md` | Full NL++ language specification |
-| `CONTRIBUTING.md` | Build system details, local install, prebuilds, and release workflow |
+| `CONTRIBUTING.md` | Build system details, local install, and release workflow |
 
 ---
 

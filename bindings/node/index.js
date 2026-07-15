@@ -1,37 +1,22 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const root = fileURLToPath(new URL("../..", import.meta.url));
+// This package ships the grammar as WebAssembly only — there is no native
+// addon. Parsing is the consumer's job, via web-tree-sitter; this module exists
+// so callers can locate the artifacts without knowing the package layout.
 
-const binding = typeof process.versions.bun === "string"
-  // Support `bun build --compile` by being statically analyzable enough to find the .node file at build-time
-  ? await import(`${root}/prebuilds/${process.platform}-${process.arch}/tree-sitter-nlpp.node`)
-  : (await import("node-gyp-build")).default(root);
+const root = new URL("../../", import.meta.url);
 
-try {
-  const nodeTypes = await import(`${root}/src/node-types.json`, { with: { type: "json" } });
-  binding.nodeTypeInfo = nodeTypes.default;
-} catch { }
+/** Absolute filesystem path to the compiled grammar WASM. */
+export const wasmPath = fileURLToPath(new URL("tree-sitter-nlpp.wasm", root));
 
-const queries = [
-  ["HIGHLIGHTS_QUERY", `${root}/queries/highlights.scm`],
-  ["INJECTIONS_QUERY", `${root}/queries/injections.scm`],
-  ["LOCALS_QUERY", `${root}/queries/locals.scm`],
-  ["TAGS_QUERY", `${root}/queries/tags.scm`],
-];
+/** Absolute filesystem path to the syntax highlighting query. */
+export const highlightsQueryPath = fileURLToPath(new URL("queries/highlights.scm", root));
 
-for (const [prop, path] of queries) {
-  Object.defineProperty(binding, prop, {
-    configurable: true,
-    enumerable: true,
-    get() {
-      delete binding[prop];
-      try {
-        binding[prop] = readFileSync(path, "utf8");
-      } catch { }
-      return binding[prop];
-    }
-  });
-}
+/** The syntax highlighting query source. */
+export const HIGHLIGHTS_QUERY = readFileSync(highlightsQueryPath, "utf8");
 
-export default binding;
+/** Static node types, from `src/node-types.json`. */
+export const nodeTypeInfo = JSON.parse(
+  readFileSync(new URL("src/node-types.json", root), "utf8"),
+);

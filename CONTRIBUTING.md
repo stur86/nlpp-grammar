@@ -4,23 +4,79 @@
 
 ## Build system
 
-The build pipeline has two layers:
+This package ships the grammar as **WebAssembly only**. There is no native
+addon: no `binding.gyp`, no `node-gyp`, no prebuilds. Installing it never
+requires a C toolchain, and consumers parse with
+[web-tree-sitter](https://www.npmjs.com/package/web-tree-sitter).
 
-**Tree-sitter layer** — `tree-sitter generate` reads `grammar.js` and writes the generated C parser into `src/` (`parser.c`, `grammar.json`, `node-types.json`). `tree-sitter build` compiles `src/parser.c` into a shared library (`.so` / `.dylib` / `.dll`) used by the CLI and by tests. `tree-sitter build --wasm` produces `tree-sitter-nlpp.wasm` for browser and web-based tooling.
+Two artifacts come out of `grammar.js`:
 
-**Node binding layer** — `node-gyp` compiles `bindings/node/binding.cc` (a thin N-API wrapper around the C parser) into a native `.node` addon. `node-gyp-build` (the `install` script) picks up a pre-compiled binary from `prebuilds/` if one is present for the current platform, and falls back to compiling from source otherwise.
+**Generated C parser** — `tree-sitter generate` reads `grammar.js` and writes
+`src/parser.c`, `src/grammar.json`, and `src/node-types.json`. These are
+deterministic text, and they are committed. CI regenerates them and fails on any
+diff, so they can never drift from `grammar.js`. They are also the source that
+the non-Node bindings (Rust, Go, Python, Swift, C) each compile with their own
+toolchain — none of those go through npm.
+
+**WASM** — `tree-sitter build --wasm` compiles `src/parser.c` into
+`tree-sitter-nlpp.wasm` via emscripten. This is the artifact every JavaScript
+consumer actually uses.
 
 Key npm scripts:
 
 | Script | What it does |
 |---|---|
-| `npm run build` | `tree-sitter generate && tree-sitter build` |
-| `npm run prebuild` | Compile a native `.node` binary via `prebuildify` and place it in `prebuilds/` |
-| `npm run prepublishOnly` | `tree-sitter generate && tree-sitter build --wasm` — runs automatically before `npm publish` |
-| `npm start` | Launch the Tree-sitter playground (interactive web UI for testing the parser) |
-| `npm test` | Run the Node.js binding tests |
+| `npm run build` | `tree-sitter generate && tree-sitter build --wasm` |
+| `npm test` | Run the corpus tests in `test/corpus/` |
+| `npm start` | Launch the Tree-sitter playground (interactive parser UI) |
+| `npm run prepublishOnly` | Same as `build` — runs automatically before `npm publish` |
 
-To run the corpus tests (the `.txt` files in `test/corpus/`) use `tree-sitter test` directly — these are not wired into `npm test`.
+Building the WASM locally needs emscripten (`emcc`) on `PATH`; the tree-sitter
+CLI falls back to Docker if it isn't found.
+
+### A note on the committed WASM
+
+`tree-sitter-nlpp.wasm` is committed, which is not a pattern to imitate. It is
+there for one reason: the sibling repos currently depend on this package through
+`git+ssh://…#main`, and **git dependencies do not run `prepublishOnly`** — that
+is a publish-only lifecycle hook. Without the artifact in the tree, a git-dep
+install would have no grammar at all. Adding a `prepare` script that builds it
+would push emscripten onto every consumer's machine, which is exactly what
+dropping the native build avoided.
+
+Once this package is on npm and the consumers depend on the registry version,
+the committed WASM should be deleted and `prepublishOnly` left to build it into
+the tarball.
+
+Its bytes depend on the emscripten version, so a local rebuild will generally
+*not* match the committed file. That is expected. CI is the reference
+environment — if you need the canonical artifact, take the one CI produces
+rather than trying to match it locally.
+
+---
+
+## Package layout
+
+| Export | What it is |
+|---|---|
+| `nlpp-grammar` | Native-free module: `wasmPath`, `HIGHLIGHTS_QUERY`, `highlightsQueryPath`, `nodeTypeInfo` |
+| `nlpp-grammar/wasm` | The `.wasm` file itself |
+| `nlpp-grammar/queries/highlights` | The highlighting query `.scm` |
+
+The entry point only *locates* things — it does no parsing, and pulls in no
+dependencies. Typical use:
+
+```js
+import { Parser, Language } from "web-tree-sitter";
+import { wasmPath } from "nlpp-grammar";
+
+await Parser.init();
+const parser = new Parser();
+parser.setLanguage(await Language.load(wasmPath));
+```
+
+In a browser the entry point throws on purpose — it resolves filesystem paths.
+Import `nlpp-grammar/wasm` as a bundler asset and load the resulting URL instead.
 
 ---
 
@@ -48,56 +104,56 @@ npm pack                          # produces nlpp-grammar-<version>.tgz
 npm install /path/to/nlpp-grammar-<version>.tgz
 ```
 
-Both options compile the native binding from source on the consuming machine. To skip the C toolchain requirement on the consumer side, build a prebuild first (see below).
+Prefer option 2 when you want to know what consumers will actually get. A
+symlinked or in-repo checkout can hide packaging mistakes, because it exposes
+files that `files` does not ship. `~/nlpp-test/test-grammar.sh` automates this
+whole check.
 
 ---
 
-## Prebuilds
-
-A prebuild is a pre-compiled `.node` binary placed under `prebuilds/<platform>-<arch>/`. At install time, `node-gyp-build` detects a matching prebuild and uses it directly, bypassing the C compilation step. This is what makes it possible to install the package without having a C toolchain.
-
-To build a prebuild for the current platform:
+## Testing
 
 ```bash
-npm run prebuild
+npm test                    # corpus tests
+npx tree-sitter parse FILE  # parse a file, exits non-zero on failure
 ```
 
-For distribution, prebuilds should be built on all target platforms (Linux x64/arm64, macOS x64/arm64, Windows x64) and committed to the release artifact. The GitHub Actions workflow handles this automatically — see below.
+When checking syntax by hand, trust `tree-sitter parse`'s **exit code**, not a
+grep of its output. The parser recovers from some invalid input by inserting a
+zero-width `(MISSING …)` node rather than an `ERROR` node, so grepping for
+`ERROR` can report success on input that was actually rejected.
+
+---
+
+## CI
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `test.yml` | push to `main`, PRs | Corpus tests; regeneration drift check; builds the WASM and parses with it; packs and installs the tarball into an empty project |
+| `release.yml` | manual (`workflow_dispatch`) | Runs `test.yml`, tags `v<version>`, creates a GitHub Release, then calls `publish.yml` |
+| `publish.yml` | called by `release.yml` | Builds and publishes to npm with provenance |
+
+The drift check is the important one: `tree-sitter generate` involves no
+emscripten, so `src/` must always match `grammar.js` byte for byte. If CI fails
+there, run `npm run build` and commit the result.
+
+The emscripten version is pinned in both `test.yml` and `publish.yml`, and the
+two must stay in step — it determines the bytes of the published artifact.
 
 ---
 
 ## Publishing to npm
 
-1. Make sure you are logged in: `npm login`
-2. Bump the version in `package.json` as appropriate.
-3. Run:
+Releases go through `release.yml` (Actions → Release → Run workflow). It refuses
+to run if the tag for the current `package.json` version already exists, so bump
+the version first.
 
-```bash
-npm publish
-```
+Authentication is **npm trusted publishing (OIDC)** — there is no `NPM_TOKEN`
+secret. The `id-token: write` permission lets the workflow mint a short-lived
+credential, and npm verifies it against the trusted publisher configured for this
+repo on npmjs.com. This also means `--provenance` works, attaching a signed
+attestation linking the package to the workflow run that built it.
 
-`prepublishOnly` regenerates the parser and rebuilds the WASM automatically before the package is packed. For a release that does not require a C toolchain on the consumer side, build prebuilds via CI before publishing (see below), or run `npm run prebuild` locally for a single-platform prebuild.
-
----
-
-## GitHub Actions release workflow
-
-`.github/workflows/publish.yml` automates multi-platform prebuild compilation and npm publication.
-
-**Setup (once):**
-
-Add an `NPM_TOKEN` secret to the repository (Settings → Secrets → Actions → New repository secret). The token must have publish access to the package.
-
-**Triggering a release:**
-
-Push a version tag to trigger the workflow:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-**What the workflow does:**
-
-1. **Prebuild job** (runs in parallel on 5 platforms: Linux x64, Linux arm64, macOS x64, macOS arm64, Windows x64) — installs dependencies, runs `npm run prebuild`, and uploads the resulting `prebuilds/` directory as a GitHub Actions artifact.
-2. **Publish job** (runs after all prebuild jobs succeed) — downloads all prebuild artifacts, merges them, and runs `npm publish --provenance --access public`. npm provenance attaches a signed attestation linking the published package to this workflow run.
+Trusted publishing requires **npm >= 11.5.1**; `setup-node` ships npm 10.x, so
+the workflow upgrades npm explicitly. Removing that step produces an auth failure
+that gives no hint about the real cause.

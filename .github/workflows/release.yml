@@ -4,8 +4,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Don't tag something that doesn't pass. A tag is hard to retract once pushed.
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+
   release:
     name: Tag & Release
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
