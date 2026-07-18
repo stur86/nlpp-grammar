@@ -15,19 +15,18 @@
     }
   ],
   "metadata": {
-    "version": "0.1.0",
+    "version": "1.0.0",
     "license": "MIT",
     "description": "Parser for the Natural Language++ pseudo-code spec for AI agents",
     "authors": [
       {
         "name": "Simone Sturniolo",
         "email": "simonesturniolo@gmail.com",
-        "url": ""
+        "url": "https://stur86.github.io/s-plus-plus/"
       }
     ],
     "links": {
-      "repository": "https://github.com/stur86/nlpp-grammar",
-      "funding": ""
+      "repository": "https://github.com/stur86/nlpp-grammar"
     }
   },
   "bindings": {
