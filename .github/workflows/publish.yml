@@ -42,5 +42,24 @@ jobs:
       - name: Test
         run: npm test
 
+      # DIAGNOSTIC (temporary): npm swallows OIDC token-exchange failures at the
+      # default log level, so a trusted-publishing problem surfaces only as a
+      # bare ENEEDAUTH. Confirm the id-token request env is actually present in
+      # this (reusable) job. If these are empty, the `id-token: write` permission
+      # isn't reaching the job; if they're set, the failure is in npm's exchange
+      # with the registry (see the verbose publish output below).
+      - name: Debug OIDC token availability
+        run: |
+          echo "GITHUB_ACTIONS=${GITHUB_ACTIONS}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN present: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
+          echo "npm version: $(npm --version)"
+          echo "npm registry: $(npm config get registry)"
+
+      # `--loglevel verbose` / NPM_CONFIG_LOGLEVEL make npm print the OIDC
+      # exchange it otherwise hides, so a rejected trusted-publisher claim shows
+      # up instead of a confusing ENEEDAUTH. Remove once publishing is green.
       - name: Publish
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --loglevel verbose
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
