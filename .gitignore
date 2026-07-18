@@ -139,18 +139,13 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Generated binaries (platform-specific — never committed)
+# Generated binaries — never committed. The WASM is built into the tarball at
+# pack/publish time (the `prepack` script), so it doesn't live in git.
 *.so
 *.a
 *.pc
 *.o
 *.wasm
-
-# The WASM parser IS committed, but only until consumers install from npm rather
-# than git refs: git dependencies never run prepublishOnly, so without the
-# artifact in the tree a git-dep install would have no grammar at all. Delete it
-# once the consumers move to the registry version. See CONTRIBUTING.md.
-!tree-sitter-nlpp.wasm
 
 # Tree-sitter generated files ARE committed (portable C source + JSON), so a
 # git clone is immediately usable without running `tree-sitter generate`.

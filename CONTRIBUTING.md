@@ -43,7 +43,7 @@ Key npm scripts:
 | `npm run test:parity` | Check the TextMate grammar against `highlights.scm` (see below) |
 | `npm run test:package` | Pack a tarball, install it into an empty project, check the entry points |
 | `npm start` | Launch the Tree-sitter playground (interactive parser UI) |
-| `npm run prepublishOnly` | Same as `build` — runs automatically before `npm publish` |
+| `npm run prepack` | Same as `build` — runs automatically on `npm pack`/`npm publish` |
 
 CI runs exactly these scripts — `scripts/parse-examples.mjs` and
 `scripts/check-package.mjs` — rather than inlining the logic into workflow YAML,
@@ -52,24 +52,21 @@ so anything CI can catch, you can reproduce locally with one command.
 Building the WASM locally needs emscripten (`emcc`) on `PATH`; the tree-sitter
 CLI falls back to Docker if it isn't found.
 
-### A note on the committed WASM
+### The WASM is built, not committed
 
-`tree-sitter-nlpp.wasm` is committed, which is not a pattern to imitate. It is
-there for one reason: the sibling repos currently depend on this package through
-`git+ssh://…#main`, and **git dependencies do not run `prepublishOnly`** — that
-is a publish-only lifecycle hook. Without the artifact in the tree, a git-dep
-install would have no grammar at all. Adding a `prepare` script that builds it
-would push emscripten onto every consumer's machine, which is exactly what
-dropping the native build avoided.
+`tree-sitter-nlpp.wasm` is **not** in git (it's `.gitignore`d). The `prepack`
+script builds it, so it lands in the tarball on `npm pack` and `npm publish`
+without living in version control. Consumers install from npm and get the built
+artifact; nothing installs this package via a git ref anymore.
 
-Once this package is on npm and the consumers depend on the registry version,
-the committed WASM should be deleted and `prepublishOnly` left to build it into
-the tarball.
+A consequence: after a fresh clone the WASM doesn't exist yet — run `npm run
+build` (or anything that packs) before `npm run test:examples`/`test:parity`,
+which load it. CI builds it in the `wasm` job; the fast `test` job needs no
+emscripten because it only runs the drift check and corpus tests.
 
-Its bytes depend on the emscripten version, so a local rebuild will generally
-*not* match the committed file. That is expected. CI is the reference
-environment — if you need the canonical artifact, take the one CI produces
-rather than trying to match it locally.
+Its bytes depend on the emscripten version, so builds across machines won't be
+byte-identical. That's fine — the published artifact is whatever the pinned
+emscripten in `publish.yml` produces.
 
 ---
 

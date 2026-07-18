@@ -12,9 +12,12 @@ concurrency:
 
 jobs:
   test:
-    name: Corpus, drift, and package
+    name: Corpus and drift
     runs-on: ubuntu-latest
 
+    # This job needs no emscripten: the drift check is deterministic text and the
+    # corpus tests build the parser from src/parser.c. Everything that needs the
+    # WASM lives in the `wasm` job, which builds it fresh.
     steps:
       - uses: actions/checkout@v4
 
@@ -39,22 +42,8 @@ jobs:
       - name: Corpus tests
         run: npm test
 
-      # Parse with the *committed* WASM — no emscripten, no rebuild. That is the
-      # artifact git-dependency consumers actually get, and until it stops being
-      # committed nothing else in CI ever exercises it. The `wasm` job below
-      # checks a freshly built one instead; the two are different claims.
-      - name: Committed WASM parses the examples
-        run: npm run test:examples
-
-      # The TextMate grammar (nlpp.tmLanguage.json) is a second, hand-maintained
-      # source of truth for the syntax. This holds it in lockstep with
-      # highlights.scm on an enumerated set of tokens, so a change to one grammar
-      # that isn't mirrored in the other fails here.
-      - name: TextMate grammar is in lockstep with highlights.scm
-        run: npm run test:parity
-
   wasm:
-    name: WASM builds and parses
+    name: WASM builds, parses, and matches the TextMate grammar
     runs-on: ubuntu-latest
 
     steps:
@@ -79,6 +68,13 @@ jobs:
       - name: Parse the examples with the built WASM
         run: npm run test:examples
 
+      # The TextMate grammar (nlpp.tmLanguage.json) is a second, hand-maintained
+      # source of truth for the syntax. This holds it in lockstep with
+      # highlights.scm on an enumerated set of tokens, so a change to one grammar
+      # that isn't mirrored in the other fails here. Uses the WASM built above.
+      - name: TextMate grammar is in lockstep with highlights.scm
+        run: npm run test:parity
+
   package:
     name: Package installs cleanly
     runs-on: ubuntu-latest
@@ -89,6 +85,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # `npm pack` (inside test:package) runs the `prepack` script, which builds
+      # the WASM into the tarball — so this job needs the toolchain too.
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
 
       - name: Install dependencies
         run: npm ci

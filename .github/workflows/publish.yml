@@ -25,9 +25,9 @@ jobs:
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@latest
 
-      # `prepublishOnly` runs `tree-sitter build --wasm`, which needs a C-to-wasm
-      # toolchain. Pinned rather than floating: the emscripten version determines
-      # the bytes of the published artifact.
+      # `npm publish` runs the `prepack` script (`tree-sitter build --wasm`),
+      # which needs a C-to-wasm toolchain. Pinned rather than floating: the
+      # emscripten version determines the bytes of the published artifact.
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: 3.1.64
@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Belt and braces: prepublishOnly builds these anyway, but a failure here
-      # is a clear error rather than a confusing one mid-publish.
+      # Belt and braces: prepack builds these into the tarball anyway, but a
+      # failure here is a clear error rather than a confusing one mid-publish.
       - name: Build parser and WASM
         run: npm run build
 
