@@ -63,6 +63,9 @@
     "test": "tree-sitter test",
     "test:examples": "node scripts/parse-examples.mjs",
     "test:parity": "node scripts/check-highlight-parity.mjs",
-    "test:package": "node scripts/check-package.mjs"
+    "test:package": "node scripts/check-package.mjs",
+    "bump:patch": "npx tree-sitter version --bump patch && npm run build",
+    "bump:minor": "npx tree-sitter version --bump minor && node scripts/check-spec-version.mjs && npm run build",
+    "bump:major": "npx tree-sitter version --bump major && node scripts/check-spec-version.mjs && npm run build"
   }
 }
