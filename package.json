@@ -16,18 +16,24 @@
   "types": "bindings/node",
   "exports": {
     ".": {
+      "types": "./bindings/node/index.d.ts",
       "browser": "./bindings/node/browser-stub.js",
       "default": "./bindings/node/index.js"
     },
     "./wasm": "./tree-sitter-nlpp.wasm",
     "./queries/highlights": "./queries/highlights.scm",
-    "./textmate": "./nlpp.tmLanguage.json"
+    "./textmate": "./nlpp.tmLanguage.json",
+    "./package.json": "./package.json"
   },
   "keywords": [
-    "incremental",
-    "parsing",
+    "nlpp",
+    "nl++",
     "tree-sitter",
-    "nlpp"
+    "textmate",
+    "grammar",
+    "parser",
+    "parsing",
+    "syntax-highlighting"
   ],
   "files": [
     "grammar.js",

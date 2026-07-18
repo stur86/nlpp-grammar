@@ -1,6 +1,6 @@
 # nlpp-grammar
 
-Tree-sitter grammar for [NL++](https://github.com/stur86/nlpp-grammar) — a pseudocode language for expressing software architecture and implementation intent to AI coding agents.
+Tree-sitter grammar for [NL++](https://stur86.github.io/s-plus-plus/) — a pseudocode language for expressing software architecture and implementation intent to AI coding agents.
 
 NL++ files use the `.nlpp` extension and language ID `nlpp`. The language lets you sketch structure, dependencies, and intent in a form that is both human-readable and toolable: syntax highlighting, autocomplete, import inlining, and symbol resolution, all feeding into a structured prompt ready for a coding agent.
 
@@ -49,8 +49,8 @@ Requires the [tree-sitter CLI](https://tree-sitter.github.io/tree-sitter/creatin
 
 ```bash
 npm install
-tree-sitter generate   # regenerate src/ from grammar.js
-tree-sitter build      # compile the shared library
+tree-sitter generate     # regenerate src/ from grammar.js
+tree-sitter build --wasm # compile the WASM grammar
 ```
 
 `npm run build` runs `generate` + `build` in one step.
