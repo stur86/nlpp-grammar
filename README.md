@@ -33,7 +33,8 @@ For the full language reference see [nlpp-spec-v1.0.md](nlpp-spec-v1.0.md).
 |---|---|
 | `grammar.js` | Tree-sitter grammar definition |
 | `src/` | Generated C parser (output of `tree-sitter generate`) |
-| `queries/highlights.scm` | Syntax highlighting capture groups |
+| `queries/highlights.scm` | Syntax highlighting capture groups (tree-sitter) |
+| `nlpp.tmLanguage.json` | TextMate grammar — highlighting for editors/tools that don't run tree-sitter |
 | `bindings/node/` | Node entry point — locates the WASM and queries (no parsing, no dependencies) |
 | `tree-sitter-nlpp.wasm` | Compiled grammar; the artifact JS consumers actually load |
 | `test/` | Corpus tests (`tree-sitter test`) |
@@ -87,6 +88,25 @@ Capture groups defined in `queries/highlights.scm`:
 | `@type` | type annotations (fields, parameters, return types) |
 | `@variable.parameter` | parameter names |
 | `@variable` | `uses` targets |
+
+### TextMate grammar
+
+`nlpp.tmLanguage.json` (the `nlpp-grammar/textmate` export) is a **second**
+grammar for NL++, in TextMate/regex form. tree-sitter is precise but not
+everywhere — this grammar covers the places it can't run:
+
+- **Editors**, for highlight-on-open before a tree-sitter language server has
+  started. VS Code registers it via `contributes.grammars`.
+- **The web**, via [Shiki](https://shiki.style/) and other TextMate-based
+  highlighters, which consume it natively — the WASM is no help to them.
+
+Being regex-based it is approximate where the tree-sitter grammar relies on a
+GLR conflict (the type-vs-name boundary and custom-block keywords); everything
+lexical, including recursive `[ … ]` template arguments, it gets exactly right.
+It is a hand-maintained duplicate of `grammar.js`, kept honest by a parity test
+(`npm run test:parity`) that asserts the two highlighters agree token by token.
+See [CONTRIBUTING.md](CONTRIBUTING.md#the-textmate-grammar--a-second-source-of-truth)
+before editing either grammar.
 
 ---
 
