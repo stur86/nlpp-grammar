@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
 
       # setup-node ships npm 10.x; trusted publishing (OIDC) needs >= 11.5.1.
