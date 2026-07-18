@@ -46,6 +46,13 @@ jobs:
       - name: Committed WASM parses the examples
         run: npm run test:examples
 
+      # The TextMate grammar (nlpp.tmLanguage.json) is a second, hand-maintained
+      # source of truth for the syntax. This holds it in lockstep with
+      # highlights.scm on an enumerated set of tokens, so a change to one grammar
+      # that isn't mirrored in the other fails here.
+      - name: TextMate grammar is in lockstep with highlights.scm
+        run: npm run test:parity
+
   wasm:
     name: WASM builds and parses
     runs-on: ubuntu-latest

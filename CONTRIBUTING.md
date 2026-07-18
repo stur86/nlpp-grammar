@@ -40,6 +40,7 @@ Key npm scripts:
 | `npm run build` | `tree-sitter generate && tree-sitter build --wasm` |
 | `npm test` | Run the corpus tests in `test/corpus/` |
 | `npm run test:examples` | Parse every `examples/*.nlpp` with the built WASM |
+| `npm run test:parity` | Check the TextMate grammar against `highlights.scm` (see below) |
 | `npm run test:package` | Pack a tarball, install it into an empty project, check the entry points |
 | `npm start` | Launch the Tree-sitter playground (interactive parser UI) |
 | `npm run prepublishOnly` | Same as `build` — runs automatically before `npm publish` |
@@ -72,6 +73,50 @@ rather than trying to match it locally.
 
 ---
 
+## The TextMate grammar — a second source of truth
+
+`nlpp.tmLanguage.json` is a **regex/TextMate** grammar for NL++, and it is a
+deliberate duplication of the syntax that `grammar.js` already describes. It
+earns its keep because tree-sitter can't be everywhere:
+
+- **VS Code** highlights a file the instant it opens using this grammar, before
+  the language server has started and produced precise semantic tokens.
+- **The web** (Shiki, and any TextMate-based highlighter) consumes it natively —
+  tree-sitter's WASM is no help to those libraries.
+
+Being a regex grammar, it is **approximate** where the real grammar relies on a
+GLR conflict. Two things it cannot decide and does not try to:
+
+- the type-vs-name boundary in genuinely ambiguous cases, and
+- **custom-block keywords** (any non-reserved identifier can be one), especially
+  on a header-clause line like `aggregate X publishes A, B consumes C`.
+
+Everything lexical — comments, strings, prose blocks, fill-ins, every reserved
+keyword, references, and the recursive `[ … ]` template arguments — it gets
+exactly right.
+
+**The duplication is kept honest by a test.** `scripts/check-highlight-parity.mjs`
+runs a set of fixtures through *both* highlighters, normalises each side to a
+shared vocabulary of kinds (keyword, type, function, string, …), and asserts they
+agree token by token. Add a keyword to `grammar.js` + `highlights.scm` and forget
+`nlpp.tmLanguage.json` (or vice versa) and `npm run test:parity` fails.
+
+```bash
+npm run test:parity                               # the assertions (CI runs this)
+node scripts/check-highlight-parity.mjs --dump examples/types.nlpp  # eyeball both sides
+```
+
+The `--dump` mode prints every token with the kind each highlighter assigns and
+flags mismatches — the fastest way to see what a grammar change did. When you
+change the syntax, update all four in the same commit: `grammar.js`,
+`queries/highlights.scm`, `nlpp.tmLanguage.json`, and a fixture in
+`scripts/parity-fixtures.mjs` covering the new token.
+
+The fixtures deliberately avoid asserting the approximate cases above; those are
+where the two grammars are *expected* to differ.
+
+---
+
 ## Package layout
 
 | Export | What it is |
@@ -79,6 +124,7 @@ rather than trying to match it locally.
 | `nlpp-grammar` | Native-free module: `wasmPath`, `HIGHLIGHTS_QUERY`, `highlightsQueryPath`, `nodeTypeInfo` |
 | `nlpp-grammar/wasm` | The `.wasm` file itself |
 | `nlpp-grammar/queries/highlights` | The highlighting query `.scm` |
+| `nlpp-grammar/textmate` | The TextMate grammar (`nlpp.tmLanguage.json`) |
 
 The entry point only *locates* things — it does no parsing, and pulls in no
 dependencies. Typical use:
@@ -146,7 +192,7 @@ zero-width `(MISSING …)` node rather than an `ERROR` node, so grepping for
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `test.yml` | push to `main`, PRs | Corpus tests; regeneration drift check; builds the WASM and parses with it; packs and installs the tarball into an empty project |
+| `test.yml` | push to `main`, PRs | Corpus tests; regeneration drift check; TextMate/highlights parity check; builds the WASM and parses with it; packs and installs the tarball into an empty project |
 | `release.yml` | manual (`workflow_dispatch`) | Runs `test.yml`, tags `v<version>`, creates a GitHub Release, then calls `publish.yml` |
 | `publish.yml` | called by `release.yml` | Builds and publishes to npm with provenance |
 

@@ -1,0 +1,238 @@
+{
+  "information_for_contributors": [
+    "This TextMate grammar is a SECOND, hand-maintained source of truth for NL++ syntax, parallel to grammar.js (the tree-sitter grammar). Change one, change the other.",
+    "tree-sitter drives precise editor/LSP highlighting; this drives the fast first-paint in VS Code before the language server loads, and highlighting on the web via Shiki (which consumes TextMate grammars natively).",
+    "scripts/check-highlight-parity.mjs enforces that the two agree on an enumerated set of tokens. Run `npm run test:parity` after touching either file.",
+    "Known-approximate and deliberately NOT enforced: the type-vs-name disambiguation (a leading `field string name` needs a GLR conflict to resolve) and custom-block keywords (any identifier can be one). tree-sitter/the LSP resolve these; a regex grammar can only guess. Parity fixtures avoid asserting on those."
+  ],
+  "name": "NL++",
+  "scopeName": "source.nlpp",
+  "fileTypes": ["nlpp"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#prose-block" },
+    { "include": "#fill-in" },
+    { "include": "#import" },
+    { "include": "#define" },
+    { "include": "#uses" },
+    { "include": "#object-block" },
+    { "include": "#function-block" },
+    { "include": "#field" },
+    { "include": "#custom-block" },
+    { "include": "#keywords" },
+    { "include": "#param-clause" },
+    { "include": "#strings" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.nlpp",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.nlpp",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+
+    "prose-block": {
+      "comment": "/? ... ?/ reaches the LLM verbatim; opaque, so no inner patterns. Delimiters and text are all @string.special in the tree-sitter query.",
+      "name": "string.other.prose.nlpp",
+      "begin": "/\\?",
+      "end": "\\?/"
+    },
+
+    "fill-in": {
+      "comment": "??? plus the rest of the line. Marker and hint are both @string.special.",
+      "match": "(\\?\\?\\?)(.*)$",
+      "captures": {
+        "1": { "name": "string.other.fill-in.marker.nlpp" },
+        "2": { "name": "string.other.fill-in.hint.nlpp" }
+      }
+    },
+
+    "import": {
+      "comment": "The path that follows is a real string, highlighted by #strings.",
+      "match": "\\bimport\\b",
+      "name": "keyword.control.import.nlpp"
+    },
+
+    "define": {
+      "comment": "define <name> <body-to-EOL>. The body is one opaque token in the grammar (quotes are NOT a string), so we consume the whole line and leave the body unscoped to match.",
+      "match": "\\b(define)\\b(?:[ \\t]+([A-Za-z_][A-Za-z0-9_]*))?(.*)$",
+      "captures": {
+        "1": { "name": "keyword.other.define.nlpp" },
+        "2": { "name": "constant.other.definition.nlpp" },
+        "3": { "name": "meta.definition.body.nlpp" }
+      }
+    },
+
+    "uses": {
+      "match": "\\b(uses)\\b[ \\t]+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)",
+      "captures": {
+        "1": { "name": "keyword.other.uses.nlpp" },
+        "2": { "name": "variable.other.uses.nlpp" }
+      }
+    },
+
+    "object-block": {
+      "comment": "layer/module/service/component/class/interface/enum/type <Name>. The keyword is always followed directly by the name — no optional type — so this is unambiguous. Any modifiers before it are consumed by #keywords first; inherits/implements clauses after the name are left to #keywords too.",
+      "match": "\\b(layer|module|service|component|class|interface|enum|type)\\b[ \\t]+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.object.nlpp" },
+        "2": { "name": "entity.name.type.nlpp" }
+      }
+    },
+
+    "function-block": {
+      "comment": "function/method/getter/setter [return-type] name. Region ends BEFORE the params '(' and body '{' so those are handled by the top-level machinery. Inside, the optional return type and the name are told apart by lookahead: a type is followed by more (another identifier, '[' or '&'); the name is the identifier just before '(', '{' or EOL.",
+      "begin": "\\b(function|method|getter|setter)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.function.nlpp" }
+      },
+      "end": "(?=\\(|\\{|$)",
+      "patterns": [
+        { "include": "#type-arguments" },
+        { "include": "#reference" },
+        { "include": "#auto" },
+        {
+          "comment": "return type: identifier followed by more of the declaration",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:\\[|&|[A-Za-z_]))",
+          "name": "entity.name.type.nlpp"
+        },
+        {
+          "comment": "the declared name: identifier just before '(', '{' or EOL",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:\\(|\\{|$))",
+          "name": "entity.name.function.nlpp"
+        },
+        { "include": "#comments" }
+      ]
+    },
+
+    "field": {
+      "comment": "[modifiers] field [type] name. Modifiers are consumed by #keywords first. Region runs to EOL/comment so the recursive #type-arguments can highlight the template WITHOUT the outer rule consuming it. type vs name told apart by the same lookahead trick as functions.",
+      "begin": "\\b(field)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.field.nlpp" }
+      },
+      "end": "(?=$|//|/\\*)",
+      "patterns": [
+        { "include": "#type-arguments" },
+        { "include": "#reference" },
+        { "include": "#auto" },
+        {
+          "comment": "field type: identifier followed by more of the declaration",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:\\[|&|[A-Za-z_]))",
+          "name": "entity.name.type.nlpp"
+        },
+        {
+          "comment": "the field name: last identifier before EOL/comment",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:$|//|/\\*))",
+          "name": "variable.other.member.nlpp"
+        },
+        { "include": "#comments" }
+      ]
+    },
+
+    "custom-block": {
+      "comment": "APPROXIMATE — see information_for_contributors. Any NON-reserved identifier can be a block keyword (a defined term), followed by the name. The negative lookahead keeps this off reserved-keyword lines (field/class/method/...), which the anchored '^[ \\t]*' would otherwise outrank by starting a column earlier. We only fire when the second identifier is followed by '{' or EOL; single-word header clauses can still be mis-highlighted. Not enforced by the parity test.",
+      "match": "^[ \\t]*(?!(?:import|define|uses|field|public|private|override|inherits|implements|layer|module|service|component|class|interface|enum|type|function|method|getter|setter|auto)\\b)([A-Za-z_][A-Za-z0-9_]*)[ \\t]+([A-Za-z_][A-Za-z0-9_]*)[ \\t]*(?=\\{|$)",
+      "captures": {
+        "1": { "name": "keyword.other.custom.nlpp" },
+        "2": { "name": "entity.name.type.nlpp" }
+      }
+    },
+
+    "keywords": {
+      "patterns": [
+        {
+          "name": "storage.modifier.nlpp",
+          "match": "\\b(public|private|override)\\b"
+        },
+        {
+          "name": "keyword.other.relation.nlpp",
+          "match": "\\b(inherits|implements)\\b"
+        }
+      ]
+    },
+
+    "param-clause": {
+      "comment": "( [type] name , ... ). '(' only ever opens a param clause in NL++, so this is safe at top level. The parens and separating commas are left unscoped to match highlights.scm, which captures type-argument brackets but not param punctuation. Same type/name lookahead, bounded by ',' and ')'.",
+      "begin": "\\(",
+      "end": "\\)",
+      "patterns": [
+        { "include": "#type-arguments" },
+        { "include": "#reference" },
+        { "include": "#auto" },
+        {
+          "comment": "param type: identifier followed by more (bracket, '&', or the name)",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:\\[|&|[A-Za-z_]))",
+          "name": "entity.name.type.nlpp"
+        },
+        {
+          "comment": "param name: identifier just before ',' or ')'",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=[ \\t]*(?:,|\\)))",
+          "name": "variable.parameter.nlpp"
+        },
+        { "include": "#comments" }
+      ]
+    },
+
+    "type-arguments": {
+      "comment": "[ type-arg (, type-arg)* ] — recursive, so nested templates highlight to any depth. '[' only ever opens type arguments in NL++.",
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.typeargs.begin.nlpp" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.typeargs.end.nlpp" }
+      },
+      "patterns": [
+        { "include": "#type-arguments" },
+        { "include": "#reference" },
+        { "include": "#auto" },
+        { "include": "#numbers" },
+        {
+          "name": "punctuation.separator.typeargs.nlpp",
+          "match": ","
+        },
+        {
+          "name": "entity.name.type.nlpp",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+
+    "reference": {
+      "name": "keyword.operator.reference.nlpp",
+      "match": "&"
+    },
+
+    "auto": {
+      "comment": "@keyword.type in the tree-sitter query, so a keyword here too.",
+      "name": "keyword.other.auto.nlpp",
+      "match": "\\bauto\\b"
+    },
+
+    "numbers": {
+      "name": "constant.numeric.integer.nlpp",
+      "match": "\\b[0-9]+\\b"
+    },
+
+    "strings": {
+      "name": "string.quoted.double.nlpp",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.nlpp",
+          "match": "\\\\."
+        }
+      ]
+    }
+  }
+}

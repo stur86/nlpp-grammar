@@ -20,7 +20,8 @@
       "default": "./bindings/node/index.js"
     },
     "./wasm": "./tree-sitter-nlpp.wasm",
-    "./queries/highlights": "./queries/highlights.scm"
+    "./queries/highlights": "./queries/highlights.scm",
+    "./textmate": "./nlpp.tmLanguage.json"
   },
   "keywords": [
     "incremental",
@@ -39,10 +40,13 @@
     "src/node-types.json",
     "src/parser.c",
     "src/tree_sitter/**",
-    "*.wasm"
+    "*.wasm",
+    "nlpp.tmLanguage.json"
   ],
   "devDependencies": {
     "tree-sitter-cli": "^0.26.8",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2",
     "web-tree-sitter": "^0.26.0"
   },
   "scripts": {
@@ -52,6 +56,7 @@
     "start": "tree-sitter playground",
     "test": "tree-sitter test",
     "test:examples": "node scripts/parse-examples.mjs",
+    "test:parity": "node scripts/check-highlight-parity.mjs",
     "test:package": "node scripts/check-package.mjs"
   }
 }

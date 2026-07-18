@@ -59,8 +59,10 @@ try {
     failed = true;
   }
 
-  // The subpaths nlpp-ts-server and nlpp-vscode actually consume.
-  for (const subpath of ["nlpp-grammar/wasm", "nlpp-grammar/queries/highlights"]) {
+  // The subpaths nlpp-ts-server and nlpp-vscode actually consume. `./textmate`
+  // is the TextMate grammar that nlpp-vscode copies in at build time and that
+  // Shiki loads on the web.
+  for (const subpath of ["nlpp-grammar/wasm", "nlpp-grammar/queries/highlights", "nlpp-grammar/textmate"]) {
     try {
       consumerRequire.resolve(subpath);
       console.log(`ok  ${subpath} resolves`);
